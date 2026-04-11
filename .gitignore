@@ -1,0 +1,25 @@
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+
+# Node / Vite
+node_modules/
+dist/
+
+# Local JDK bundle
+openJdk-25.jdk/
