@@ -1,4 +1,5 @@
 FROM eclipse-temurin:21-jdk-alpine AS build
+RUN apk add --no-cache curl
 WORKDIR /app
 COPY . .
 RUN ./mvnw clean package -DskipTests
