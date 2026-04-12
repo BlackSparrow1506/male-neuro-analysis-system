@@ -1,0 +1,200 @@
+/* ── Mobile meta ──────────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+
+/* Prevent iOS bounce / double-scroll on fixed overlays */
+html, body { overscroll-behavior: none; }
+
+/* ── Mobile tab bar (3D app view) ─────────────────────────────────────────── */
+.nn-mobile-tabs {
+  display: none;
+}
+
+/* ── ProfileSelector top bar ─────────────────────────────────────────────── */
+.nn-topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── ProfilePage grid ────────────────────────────────────────────────────── */
+.nn-profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* ── Modal scrollable overlay ────────────────────────────────────────────── */
+.nn-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Panels ──────────────────────────────────────────────────────────────── */
+.nn-left-panel  { width: 300px; flex-shrink: 0; overflow-y: auto; }
+.nn-right-panel { width: 350px; flex-shrink: 0; overflow-y: auto; }
+.nn-center      { flex: 1; position: relative; background: #020610; overflow: hidden; }
+.nn-main        { flex: 1; display: flex; overflow: hidden; }
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* MOBILE  ≤ 768px                                                             */
+/* ─────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* ── Fixed bottom tab bar ────────────────────────────────────────────────
+     position:fixed ensures it's always visible regardless of what Three.js
+     Canvas does to the flex layout. viewport-fit=cover + safe-area-inset
+     extends it down to cover the iPhone home indicator bar.              */
+  .nn-mobile-tabs {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: rgba(6, 10, 26, 0.98);
+    border-top: 1px solid rgba(0, 204, 255, 0.15);
+    /* 52px for button area + home-indicator safe area on iOS */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    min-height: 52px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .nn-mobile-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: transparent;
+    border: none;
+    color: #2a3a50;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.2s;
+    min-height: 52px; /* tappable area */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .nn-mobile-tab.active {
+    color: #00ccff;
+    border-top: 2px solid #00ccff;
+  }
+
+  .nn-mobile-tab-icon {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  /* ── Main content area ───────────────────────────────────────────────────
+     Pad the bottom so panels don't go under the fixed tab bar.
+     The calc mirrors: 52px tab bar + safe area inset.                    */
+  .nn-main {
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ── All panels hidden by default ──────────────────────────────────────── */
+  .nn-left-panel,
+  .nn-right-panel,
+  .nn-center {
+    width: 100% !important;
+    display: none;
+    height: auto;
+    max-height: none;
+  }
+
+  /* ── Active panel: fill all remaining space and scroll ─────────────────── */
+
+  .nn-main[data-tab="metrics"] .nn-left-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nn-main[data-tab="chat"] .nn-right-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nn-main[data-tab="3d"] .nn-center {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden; /* Canvas fills the space; no scroll */
+  }
+
+  /* ── ProfileSelector top bar — compact ─────────────────────────────────── */
+  .nn-topbar-nav {
+    display: none;
+  }
+
+  .nn-topbar-brand {
+    font-size: 10px !important;
+    letter-spacing: 2px !important;
+  }
+
+  /* ── ProfilePage ─────────────────────────────────────────────────────────── */
+  .nn-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .nn-profile-sidebar {
+    display: none !important;
+  }
+
+  .nn-profile-main {
+    width: 100% !important;
+  }
+
+  /* ── Other scrollable pages ─────────────────────────────────────────────── */
+  .nn-auth-scroll {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    height: 100vh;
+  }
+
+  .dash-scroll {
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .nn-modal-overlay {
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .nn-welcome-scroll {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Danger card in profile — stack vertically */
+  .nn-danger-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* SMALL MOBILE  ≤ 480px                                                       */
+/* ─────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .nn-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

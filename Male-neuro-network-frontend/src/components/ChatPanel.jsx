@@ -1,26 +1,31 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { sendChatMessage, fetchChatHistory } from '../api'
+import { sendChatMessage, fetchChatHistory, synthesizeSpeech } from '../api'
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
 
-function speakText(text) {
-  if (!window.speechSynthesis) return
-  window.speechSynthesis.cancel()
-  const utterance = new SpeechSynthesisUtterance(text)
-  utterance.rate = 0.92
-  utterance.pitch = 0.85
-  utterance.volume = 1
+let currentAudio = null
 
-  // Pick a scientific/professional voice: prefer UK English male, then any English male
-  const voices = window.speechSynthesis.getVoices()
-  const preferred = voices.find(v =>
-    /daniel|alex|google uk english male/i.test(v.name)
-  ) || voices.find(v => /en[-_](gb|uk)/i.test(v.lang) && v.name.toLowerCase().includes('male')) ||
-    voices.find(v => /en/i.test(v.lang) && !v.name.toLowerCase().includes('female')) ||
-    voices[0]
-
-  if (preferred) utterance.voice = preferred
-  window.speechSynthesis.speak(utterance)
+async function speakText(text) {
+  try {
+    // Stop any currently playing audio
+    if (currentAudio) {
+      currentAudio.pause()
+      currentAudio = null
+    }
+    const url = await synthesizeSpeech(text)
+    const audio = new Audio(url)
+    currentAudio = audio
+    audio.play()
+    audio.onended = () => URL.revokeObjectURL(url)
+  } catch {
+    // Fallback to browser voice if ElevenLabs fails
+    if (!window.speechSynthesis) return
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.rate = 0.92
+    utterance.pitch = 0.85
+    window.speechSynthesis.speak(utterance)
+  }
 }
 
 export default function ChatPanel({ profileId, onClearChat }) {
@@ -162,9 +167,8 @@ export default function ChatPanel({ profileId, onClearChat }) {
             }}
             onClick={() => {
               if (ttsEnabled) {
-                window.speechSynthesis && window.speechSynthesis.pause()
-              } else {
-                window.speechSynthesis && window.speechSynthesis.resume()
+                if (currentAudio) { currentAudio.pause(); currentAudio = null }
+                window.speechSynthesis && window.speechSynthesis.cancel()
               }
               setTtsEnabled(v => !v)
             }}

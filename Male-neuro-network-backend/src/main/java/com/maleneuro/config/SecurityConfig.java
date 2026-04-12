@@ -38,8 +38,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Allow preflight requests through without a token
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                // Auth endpoints are public
-                .requestMatchers("/api/auth/**").permitAll()
+                // Only specific auth endpoints are public
+                .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/api/auth/verify").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/resend-verification").permitAll()
                 // Health check is public
                 .requestMatchers("/api/health").permitAll()
                 // Everything else requires a valid JWT

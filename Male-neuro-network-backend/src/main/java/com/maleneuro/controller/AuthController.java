@@ -3,7 +3,10 @@ package com.maleneuro.controller;
 import com.maleneuro.config.JwtUtil;
 import com.maleneuro.model.AuthRequest;
 import com.maleneuro.model.AuthResponse;
+import com.maleneuro.model.NeuralProfile;
 import com.maleneuro.model.User;
+import com.maleneuro.repository.ChatMessageRepository;
+import com.maleneuro.repository.NeuralProfileRepository;
 import com.maleneuro.repository.UserRepository;
 import com.maleneuro.service.MailService;
 import org.slf4j.Logger;
@@ -11,12 +14,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,17 +37,23 @@ public class AuthController {
     private static final Pattern USERNAME_RE = Pattern.compile("^[A-Za-z0-9_.-]{3,30}$");
 
     private final UserRepository userRepo;
+    private final NeuralProfileRepository profileRepo;
+    private final ChatMessageRepository chatRepo;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final MailService mailService;
     private final String frontendUrl;
 
     public AuthController(UserRepository userRepo,
+                          NeuralProfileRepository profileRepo,
+                          ChatMessageRepository chatRepo,
                           PasswordEncoder passwordEncoder,
                           JwtUtil jwtUtil,
                           MailService mailService,
                           @Value("${app.frontend-url:http://localhost:5173}") String frontendUrl) {
         this.userRepo = userRepo;
+        this.profileRepo = profileRepo;
+        this.chatRepo = chatRepo;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.mailService = mailService;
@@ -178,6 +189,59 @@ public class AuthController {
             }
         }
         return ResponseEntity.ok(Map.of("message", "If that email exists, a verification link has been sent."));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getMe(@AuthenticationPrincipal String userId) {
+        return userRepo.findById(userId)
+                .map(u -> ResponseEntity.ok((Object) Map.of(
+                        "userId", u.getId(),
+                        "username", u.getUsername(),
+                        "email", u.getEmail(),
+                        "emailVerified", u.isEmailVerified(),
+                        "createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : ""
+                )))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found")));
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<?> changePassword(@AuthenticationPrincipal String userId,
+                                            @RequestBody Map<String, String> req) {
+        String currentPassword = req.get("currentPassword");
+        String newPassword = req.get("newPassword");
+
+        if (currentPassword == null || currentPassword.isBlank() ||
+            newPassword == null || newPassword.length() < 6) {
+            return ResponseEntity.badRequest().body(Map.of("message", "New password must be at least 6 characters"));
+        }
+
+        return userRepo.findById(userId)
+                .map(u -> {
+                    if (!passwordEncoder.matches(currentPassword, u.getPasswordHash())) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                .body((Object) Map.of("message", "Current password is incorrect"));
+                    }
+                    u.setPasswordHash(passwordEncoder.encode(newPassword));
+                    userRepo.save(u);
+                    return ResponseEntity.ok((Object) Map.of("message", "Password updated successfully"));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found")));
+    }
+
+    @DeleteMapping("/account")
+    public ResponseEntity<?> deleteAccount(@AuthenticationPrincipal String userId) {
+        if (!userRepo.existsById(userId)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found"));
+        }
+        // Delete all chat messages for each profile, then delete profiles, then delete user
+        List<NeuralProfile> profiles = profileRepo.findByUserId(userId);
+        for (NeuralProfile profile : profiles) {
+            chatRepo.deleteByProfileId(profile.getId());
+        }
+        profileRepo.deleteAll(profiles);
+        userRepo.deleteById(userId);
+        log.info("Account deleted for userId={}", userId);
+        return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
     }
 
     private ResponseEntity<Void> redirectToFrontend(String status, String reason) {

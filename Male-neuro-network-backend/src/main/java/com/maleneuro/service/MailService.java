@@ -1,37 +1,39 @@
 package com.maleneuro.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class MailService {
 
     private static final Logger log = LoggerFactory.getLogger(MailService.class);
+    private static final String RESEND_API_URL = "https://api.resend.com/emails";
 
-    private final JavaMailSender mailSender;
+    private final RestTemplate restTemplate;
     private final String fromAddress;
     private final String fromName;
     private final String baseUrl;
     private final boolean mailEnabled;
+    private final String resendApiKey;
 
-    public MailService(JavaMailSender mailSender,
-                       @Value("${app.mail.from:noreply@maleneuro.local}") String fromAddress,
+    public MailService(@Value("${app.mail.from:onboarding@resend.dev}") String fromAddress,
                        @Value("${app.mail.from-name:Male Neural Network}") String fromName,
                        @Value("${app.base-url:http://localhost:8080}") String baseUrl,
-                       @Value("${app.mail.enabled:true}") boolean mailEnabled) {
-        this.mailSender = mailSender;
+                       @Value("${app.mail.enabled:false}") boolean mailEnabled,
+                       @Value("${resend.api.key:}") String resendApiKey) {
+        this.restTemplate = new RestTemplate();
         this.fromAddress = fromAddress;
         this.fromName = fromName;
         this.baseUrl = baseUrl;
         this.mailEnabled = mailEnabled;
+        this.resendApiKey = resendApiKey;
     }
 
     public void sendVerificationEmail(String to, String username, String token) {
@@ -57,15 +59,27 @@ public class MailService {
 
     private void send(String to, String subject, String html) {
         try {
-            MimeMessage msg = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(msg, true, StandardCharsets.UTF_8.name());
-            helper.setFrom(fromAddress, fromName);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(html, true);
-            mailSender.send(msg);
-            log.info("Sent '{}' email to {}", subject, to);
-        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(resendApiKey);
+
+            Map<String, Object> body = Map.of(
+                    "from", fromName + " <" + fromAddress + ">",
+                    "to", List.of(to),
+                    "subject", subject,
+                    "html", html
+            );
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(RESEND_API_URL, request, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("Sent '{}' email to {}", subject, to);
+            } else {
+                log.error("Failed to send mail to {}: status={} body={}", to, response.getStatusCode(), response.getBody());
+                throw new RuntimeException("Failed to send email: " + response.getBody());
+            }
+        } catch (Exception e) {
             log.error("Failed to send mail to {}: {}", to, e.getMessage(), e);
             throw new RuntimeException("Failed to send email", e);
         }

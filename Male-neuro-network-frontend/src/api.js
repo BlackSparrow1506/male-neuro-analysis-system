@@ -72,6 +72,28 @@ export function logout() {
   removeToken();
 }
 
+export async function getMe() {
+  const res = await fetch(`${BASE}/auth/me`, { headers: authHeaders() });
+  return handleResponse(res);
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  const res = await fetch(`${BASE}/auth/password`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  return handleResponse(res);
+}
+
+export async function deleteAccount() {
+  const res = await fetch(`${BASE}/auth/account`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
 // ─── Profiles ─────────────────────────────────────────────────────────────────
 export async function fetchProfiles() {
   const res = await fetch(`${BASE}/profiles`, { headers: authHeaders() });
@@ -135,4 +157,16 @@ export async function fetchChatHistory(profileId) {
 export async function checkHealth() {
   const res = await fetch(`${BASE}/health`);
   return res.json();
+}
+
+// ─── TTS ──────────────────────────────────────────────────────────────────────
+export async function synthesizeSpeech(text) {
+  const res = await fetch(`${BASE}/tts`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) throw new Error('TTS failed');
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
 }
