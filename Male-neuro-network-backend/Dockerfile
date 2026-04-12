@@ -1,10 +1,10 @@
-FROM eclipse-temurin:21-jdk-alpine AS build
-RUN apk add --no-cache curl
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 COPY . .
+RUN chmod +x ./mvnw
 RUN ./mvnw clean package -DskipTests
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /app/target/male-neuro-backend-1.0.0.jar app.jar
 EXPOSE 8080
