@@ -193,6 +193,7 @@ const sp = {
   page: {
     position: 'fixed', inset: 0, zIndex: 10000,
     background: '#020610',
+    overflowY: 'auto', WebkitOverflowScrolling: 'touch',
     fontFamily: "'SF Mono','Fira Code',monospace",
     color: '#ccd6f6',
     display: 'flex', flexDirection: 'column',
@@ -766,6 +767,7 @@ const res = {
   page: {
     position: 'fixed', inset: 0, zIndex: 10000,
     background: '#020610', fontFamily: "'SF Mono','Fira Code',monospace",
+    overflowY: 'auto', WebkitOverflowScrolling: 'touch',
     color: '#ccd6f6', display: 'flex', flexDirection: 'column',
     overflow: 'hidden', isolation: 'isolate',
   },
@@ -1082,6 +1084,7 @@ const m = {
   page: {
     position: 'fixed', inset: 0, zIndex: 10000,
     background: '#020610',
+    overflowY: 'auto', WebkitOverflowScrolling: 'touch',
     fontFamily: "'SF Mono','Fira Code',monospace",
     color: '#ccd6f6',
     display: 'flex', flexDirection: 'column',
@@ -1480,11 +1483,13 @@ export default function ProfileSelector({ selectedId, onSelect, onBackToDashboar
         </div>
 
         <div style={styles.right}>
-          <button style={styles.navLink} onClick={openAbout}>About Us</button>
-          <button style={styles.navLink} onClick={openResearch}>Research</button>
-          <button style={styles.navLink} onClick={openCommunity}>Community</button>
-          <button style={styles.navLink} onClick={openSupport}>Support</button>
-          <button style={styles.navLink} onClick={openCopyright}>Copyright</button>
+          <div className="nn-topbar-nav" style={{display:'flex',alignItems:'center',gap:4}}>
+            <button style={styles.navLink} onClick={openAbout}>About Us</button>
+            <button style={styles.navLink} onClick={openResearch}>Research</button>
+            <button style={styles.navLink} onClick={openCommunity}>Community</button>
+            <button style={styles.navLink} onClick={openSupport}>Support</button>
+            <button style={styles.navLink} onClick={openCopyright}>Copyright</button>
+          </div>
           <div style={styles.divider} />
           <div style={styles.userEmail}>{displayName}</div>
         </div>

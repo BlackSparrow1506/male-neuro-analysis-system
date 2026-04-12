@@ -53,7 +53,7 @@ export default function ProfilePage({ username, email, onBack, onLogout }) {
   return (
     <div style={styles.root}>
       {/* Sidebar */}
-      <div style={styles.sidebar}>
+      <div className="nn-profile-sidebar" style={styles.sidebar}>
         <div style={styles.sidebarTop}>
           <div style={styles.logo}>MNN</div>
           <div style={styles.logoSub}>Neural Platform</div>
@@ -72,7 +72,7 @@ export default function ProfilePage({ username, email, onBack, onLogout }) {
       </div>
 
       {/* Main content */}
-      <div style={styles.main}>
+      <div className="nn-profile-main" style={styles.main}>
         {/* Top bar */}
         <div style={styles.topbar}>
           <div>
@@ -95,7 +95,7 @@ export default function ProfilePage({ username, email, onBack, onLogout }) {
           </div>
 
           {/* Two column grid */}
-          <div style={styles.grid}>
+          <div className="nn-profile-grid" style={styles.grid}>
 
             {/* Profile info */}
             <div style={styles.card}>
@@ -191,7 +191,7 @@ export default function ProfilePage({ username, email, onBack, onLogout }) {
           </div>
 
           {/* Danger zone */}
-          <div style={styles.dangerCard}>
+          <div className="nn-danger-card" style={styles.dangerCard}>
             <div style={styles.dangerLeft}>
               <div style={styles.dangerTitle}>Delete Account</div>
               <div style={styles.dangerDesc}>

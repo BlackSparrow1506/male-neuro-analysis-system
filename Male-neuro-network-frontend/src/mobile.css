@@ -1,0 +1,186 @@
+/* ── Mobile meta ──────────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+
+/* Prevent iOS bounce / double-scroll on fixed overlays */
+html, body { overscroll-behavior: none; }
+
+/* ── Mobile tab bar (3D app view) ─────────────────────────────────────────── */
+.nn-mobile-tabs {
+  display: none;
+}
+
+/* ── ProfileSelector top bar ─────────────────────────────────────────────── */
+.nn-topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── ProfilePage grid ────────────────────────────────────────────────────── */
+.nn-profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* ── Modal scrollable overlay ────────────────────────────────────────────── */
+.nn-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Panels ──────────────────────────────────────────────────────────────── */
+.nn-left-panel  { width: 300px; flex-shrink: 0; overflow-y: auto; }
+.nn-right-panel { width: 350px; flex-shrink: 0; overflow-y: auto; }
+.nn-center      { flex: 1; position: relative; background: #020610; overflow: hidden; }
+.nn-main        { flex: 1; display: flex; overflow: hidden; }
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* MOBILE  ≤ 768px                                                             */
+/* ─────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* 3D app: stack panels, show only active tab */
+  .nn-main {
+    flex-direction: column;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nn-left-panel {
+    width: 100% !important;
+    height: auto;
+    max-height: 50vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: none; /* hidden unless tab active */
+  }
+
+  .nn-right-panel {
+    width: 100% !important;
+    height: auto;
+    max-height: 60vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: none;
+  }
+
+  .nn-center {
+    width: 100%;
+    height: 60vw;
+    min-height: 280px;
+    display: none;
+  }
+
+  /* Show active panel via data attribute */
+  .nn-main[data-tab="3d"]      .nn-center      { display: block; height: 55vh; }
+  .nn-main[data-tab="metrics"] .nn-left-panel  { display: block; }
+  .nn-main[data-tab="chat"]    .nn-right-panel { display: block; }
+
+  /* Mobile tab bar */
+  .nn-mobile-tabs {
+    display: flex;
+    flex-shrink: 0;
+    background: rgba(6,10,26,0.98);
+    border-top: 1px solid rgba(0,204,255,0.1);
+    height: 52px;
+    order: 99; /* push to bottom */
+  }
+
+  .nn-mobile-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: transparent;
+    border: none;
+    color: #2a3a50;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.2s;
+  }
+
+  .nn-mobile-tab.active {
+    color: #00ccff;
+    border-top: 2px solid #00ccff;
+  }
+
+  .nn-mobile-tab-icon {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  /* ProfileSelector top bar — compact on mobile */
+  .nn-topbar-nav {
+    display: none; /* hide nav links on mobile */
+  }
+
+  .nn-topbar-brand {
+    font-size: 10px !important;
+    letter-spacing: 2px !important;
+  }
+
+  /* ProfilePage grid → single column */
+  .nn-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Sidebar in ProfilePage → hidden on mobile */
+  .nn-profile-sidebar {
+    display: none !important;
+  }
+
+  .nn-profile-main {
+    width: 100% !important;
+  }
+
+  /* Auth page — ensure it scrolls */
+  .nn-auth-scroll {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    height: 100vh;
+  }
+
+  /* Dashboard — ensure it scrolls */
+  .dash-scroll {
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Community / modals — full height scroll */
+  .nn-modal-overlay {
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* WelcomeModal — scrollable on small screens */
+  .nn-welcome-scroll {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Danger card in profile — stack on mobile */
+  .nn-danger-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* SMALL MOBILE  ≤ 480px                                                       */
+/* ─────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .nn-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .nn-center {
+    min-height: 240px;
+  }
+}

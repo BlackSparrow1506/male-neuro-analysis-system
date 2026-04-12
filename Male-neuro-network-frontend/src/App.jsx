@@ -40,6 +40,7 @@ export default function App() {
   const [isUserInteracting, setIsUserInteracting] = useState(false)
   const [chatKey, setChatKey]       = useState(0)
   const [viewMode, setViewMode]     = useState('network')
+  const [mobileTab, setMobileTab]   = useState('3d')
   const [hoverInfo, setHoverInfo]   = useState(null)
   const [isAboutOpen, setIsAboutOpen] = useState(false)
   const hoverInfoRef = React.useRef(null)
@@ -182,14 +183,14 @@ export default function App() {
         onAboutClose={() => setIsAboutOpen(false)}
       />
 
-      <div style={styles.main}>
+      <div className="nn-main" style={styles.main} data-tab={mobileTab}>
         {/* Left: Metrics */}
-        <div style={styles.leftPanel}>
+        <div className="nn-left-panel" style={styles.leftPanel}>
           <MetricsPanel profile={profile} selectedRegion={selectedRegion} />
         </div>
 
         {/* Center: 3D Visualization */}
-        <div style={{ ...styles.center, ...(isAboutOpen ? { visibility: 'hidden' } : {}) }}>
+        <div className="nn-center" style={{ ...styles.center, ...(isAboutOpen ? { visibility: 'hidden' } : {}) }}>
           <div style={styles.viewToggle}>
             {['network', 'scan'].map(m => (
               <button
@@ -303,8 +304,26 @@ export default function App() {
         </div>
 
         {/* Right: Chat */}
-        <div style={styles.rightPanel}>
+        <div className="nn-right-panel" style={styles.rightPanel}>
           <ChatPanel key={chatKey} profileId={selectedId} onClearChat={handleClearChat} />
+        </div>
+
+        {/* Mobile bottom tab bar */}
+        <div className="nn-mobile-tabs">
+          {[
+            { key: '3d',      icon: '◎', label: '3D View' },
+            { key: 'metrics', icon: '◈', label: 'Metrics' },
+            { key: 'chat',    icon: '⊕', label: 'Chat' },
+          ].map(t => (
+            <button
+              key={t.key}
+              className={`nn-mobile-tab${mobileTab === t.key ? ' active' : ''}`}
+              onClick={() => setMobileTab(t.key)}
+            >
+              <span className="nn-mobile-tab-icon">{t.icon}</span>
+              {t.label}
+            </button>
+          ))}
         </div>
       </div>
     </div>
