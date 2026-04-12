@@ -17,7 +17,7 @@ public class TtsController {
     private static final Logger log = LoggerFactory.getLogger(TtsController.class);
 
     // Adam voice — professional male, works on free ElevenLabs tier
-    private static final String VOICE_ID = "pNInz6obpgDQGcFmaJgB";
+    private static final String VOICE_ID = "TUlcnUIOBqEFnmlLvlAL";
     private static final String ELEVENLABS_URL =
             "https://api.elevenlabs.io/v1/text-to-speech/" + VOICE_ID;
 
