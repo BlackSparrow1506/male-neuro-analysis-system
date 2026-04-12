@@ -1,6 +1,6 @@
 # Male Neural Network
 
-A full-stack AI-powered platform for visualizing and analyzing the male neural network in real time.
+A full-stack AI-powered platform for visualising and analysing the male brain in real time. Turn your lifestyle data — sleep, stress, focus, emotional state — into a living 3D map of your mind.
 
 ## Live
 
@@ -8,6 +8,63 @@ A full-stack AI-powered platform for visualizing and analyzing the male neural n
 |----------|-----|
 | Frontend | https://male-neuro-analysis-system.vercel.app |
 | Backend  | https://male-neuro-analysis-system.onrender.com |
+
+---
+
+## What It Is
+
+Most wellness tools treat the brain as a black box. This platform gives men a clear, visual understanding of their own neural activity so that improving focus, managing stress, and building mental resilience becomes something you can *see*, not just feel.
+
+Every metric is rooted in male neuroscience — testosterone-driven motivation circuits, stress-response patterns, and focus architectures specific to the male brain. The goal is to make peer-reviewed neuroscience tangible, personal, and actionable without requiring a background in science.
+
+---
+
+## Core Capabilities
+
+| # | Feature | What It Does |
+|---|---------|-------------|
+| 01 | **3D Neural Network** | Interactive real-time 3D map of active brain regions. Rotate, zoom, and explore every neural cluster. Nodes pulse with live activity scores derived from your profile data. |
+| 02 | **AI Neural Coach** | Describe your mental state in plain language. The AI interprets your input, updates your brain map instantly, and delivers science-backed personalised recommendations. |
+| 03 | **Anatomical Brain Scan** | Switch to a clinical perspective for region coherence scores, functional states, and a deeper anatomical understanding of what drives your daily performance. |
+| 04 | **Neural Metrics Panel** | Tracks Sleep Quality, Stress Level, Focus Index, Emotional Balance, Creativity, Analytical Thinking, Social Engagement, Physical Activity, Mindfulness, and Cognitive Load — each rendered as a live percentage bar with a neural coherence score. |
+
+---
+
+## The Science Behind It
+
+The platform models male-specific neural circuits identified in peer-reviewed research:
+
+| Brain Region | Function |
+|-------------|----------|
+| **BNST / POA Circuit** | Sexual behaviour and mate-seeking; dopamine-driven reward circuitry, developmentally fixed by hormonal exposure |
+| **VMHvl Circuit** | Reactive aggression and territorial behaviour; integrates threat cues with testosterone levels |
+| **Mesolimbic Dopamine** (VTA → NAcc → PFC) | Reward, motivation, and drive; testosterone potentiates dopamine release in the nucleus accumbens |
+| **Right Amygdala** | Emotional memory encoding and threat processing; males show preferential right-hemisphere activation linked to action-oriented memory |
+| **Hypothalamus INAH-3** | 2–3× larger in males; governs sex drive, gonadotropin release, and hormonal regulation |
+| **Cerebellum** | Motor coordination, spatial navigation, and cognitive processing; males show higher metabolic activity and volume |
+
+Key structural findings incorporated into the model:
+- Male brains are optimised for **intra-hemispheric communication** — stronger front-to-back wiring within each hemisphere, supporting perception-to-action coordination
+- Higher **white matter density** supports long-distance intra-hemispheric signalling
+- Sex-specific neurons account for ~25% of the male neural network (demonstrated in *C. elegans* research), establishing sex-specific circuitry as a fundamental organising principle
+
+---
+
+## Our Principles
+
+**Transparency** — Every metric is explained, every region is labelled, every recommendation is justified. No black boxes.
+
+**Precision** — Generic wellness tools do not account for the male brain. Models are calibrated to male neural architecture, hormonal patterns, and behavioural science.
+
+**Accessibility** — Advanced neuroscience should not require a PhD. Complex findings are translated into visual, intuitive experiences.
+
+**Actionability** — Every output is designed to produce a clear, concrete next step — not just information.
+
+---
+
+## Disclaimer
+
+This platform is an educational and self-reflection tool, not a medical device. Visualisations are approximations derived from population-level neuroscience research; individual variation is substantial. Nothing here constitutes clinical diagnosis or professional mental health advice. If any result or insight concerns you, consult a qualified medical or mental health professional.
 
 ---
 
@@ -19,6 +76,7 @@ A full-stack AI-powered platform for visualizing and analyzing the male neural n
 | Backend   | Spring Boot 3.4, Java 21 |
 | Database  | MongoDB Atlas |
 | AI        | Groq (LLaMA 3.3 70B) |
+| TTS       | ElevenLabs API (voice: Adam) |
 | Email     | Resend API |
 | Auth      | JWT (stateless) |
 | Deploy    | Vercel (frontend) · Render (backend) · Docker |
@@ -27,14 +85,15 @@ A full-stack AI-powered platform for visualizing and analyzing the male neural n
 
 ## Features
 
-- 3D interactive neural network visualization
-- 3D anatomical brain scan view
-- Real-time AI neural coach chat
-- Neural profile creation and management
-- Metrics panel with coherence scoring
+- 3D interactive neural network visualisation with hover tooltips and orbit controls
+- 3D anatomical brain scan view with region labels
+- Real-time AI neural coach chat (voice input + ElevenLabs TTS output)
+- Neural profile creation and management (multiple profiles per account)
+- Metrics panel with 10 neural metrics and overall coherence score
 - Email verification on registration
-- JWT-based authentication
-- Account settings — change password, delete account
+- JWT-based stateless authentication
+- Account settings — change password, delete account (cascading data removal)
+- Mobile-responsive with tabbed navigation (3D View / Metrics / Chat)
 
 ---
 
@@ -56,7 +115,8 @@ male-neuro-analysis-system/
     ├── src/
     │   ├── components/             # UI components
     │   ├── App.jsx                 # Root + routing
-    │   └── api.js                  # Backend API calls
+    │   ├── api.js                  # Backend API calls
+    │   └── mobile.css              # Mobile responsive styles
     └── vite.config.js
 ```
 
@@ -95,6 +155,11 @@ male-neuro-analysis-system/
 | GET    | `/api/chat/{profileId}/history` | Get chat history |
 | DELETE | `/api/chat/{profileId}/history` | Clear chat history |
 
+### TTS (Protected)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST   | `/api/tts` | Synthesise speech via ElevenLabs |
+
 ---
 
 ## Local Development
@@ -127,6 +192,7 @@ npm run dev
 | `MONGODB_DATABASE` | Database name (`maleneuro`) |
 | `JWT_SECRET` | Secret key for JWT signing |
 | `GROQ_API_KEY` | Groq AI API key |
+| `ELEVENLABS_API_KEY` | ElevenLabs TTS API key |
 | `RESEND_API_KEY` | Resend email API key |
 | `CORS_ALLOWED_ORIGINS` | Frontend URL |
 | `APP_BASE_URL` | Backend public URL |
