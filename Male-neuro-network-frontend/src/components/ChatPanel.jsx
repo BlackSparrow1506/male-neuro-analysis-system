@@ -283,9 +283,10 @@ const styles = {
   panel: {
     display: 'flex',
     flexDirection: 'column',
+    flex: 1,
     height: '100%',
     minHeight: 0,
-    overflow: 'hidden', /* keeps inputArea pinned at bottom */
+    overflow: 'hidden',
     background: 'rgba(10, 10, 20, 0.95)',
     borderLeft: '1px solid #1a3a5c',
   },
@@ -317,6 +318,7 @@ const styles = {
   },
   messages: {
     flex: 1,
+    minHeight: 0,
     overflowY: 'auto',
     padding: '12px',
     display: 'flex',
