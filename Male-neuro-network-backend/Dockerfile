@@ -1,4 +1,5 @@
 FROM eclipse-temurin:21-jdk AS build
+RUN apt-get update && apt-get install -y curl unzip
 WORKDIR /app
 COPY . .
 RUN chmod +x ./mvnw
