@@ -464,7 +464,6 @@ export default function ProfileDashboard({ userEmail, username, onEnter, onLogou
           {[
             { label:'About Us',   action:() => setShowAbout(true)     },
             { label:'Research',   action:() => setShowResearch(true)  },
-            { label:'Community',  action:() => setShowCommunity(true) },
             { label:'Support',    action:() => setShowSupport(true)   },
             { label:'Copyright',  action:() => setShowCopyright(true) },
           ].map(tab => (

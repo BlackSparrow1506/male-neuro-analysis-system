@@ -44,14 +44,6 @@ export function SupportModal({ onClose }) {
       detail: 'Found a technical issue or have a suggestion? Open an issue on GitHub and our development team will review it.',
       action: { label: 'Open GitHub Issues →', href: 'https://github.com/BlackSparrow1506/male-neuro-analysis-system/issues' },
     },
-    {
-      color: '#00e676',
-      icon: '♂',
-      label: 'Community & Discussion',
-      value: 'Coming Soon',
-      detail: 'A dedicated community space for Male Neural Network users is currently in development. Stay tuned.',
-      action: null,
-    },
   ]
 
   const faqs = [
@@ -170,6 +162,44 @@ export function SupportModal({ onClose }) {
                   <p style={sp.guideText}>{g.text}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── COMMUNITY ── */}
+        <section style={{ ...sp.section, background: 'rgba(0,230,118,0.015)' }}>
+          <div style={sp.sectionInner}>
+            <div style={sp.label}>Coming Soon</div>
+            <h2 style={sp.heading}>Community &amp; Discussion</h2>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 32,
+              padding: '40px 48px',
+              background: 'rgba(0,230,118,0.04)',
+              border: '1px solid rgba(0,230,118,0.15)',
+              borderRadius: 20,
+            }}>
+              <div style={{ fontSize: 64, lineHeight: 1 }}>♂</div>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: '#00e676', letterSpacing: '2px', marginBottom: 12 }}>
+                  We're Building Something
+                </div>
+                <p style={{ fontSize: 13, color: '#3a4a60', lineHeight: 1.8, marginBottom: 16, maxWidth: 520 }}>
+                  A dedicated space where Male Neural Network users can share insights, discuss neural patterns,
+                  compare profiles, and explore the science of the male brain together. The community hub is
+                  currently in active development.
+                </p>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  {['Discussion Threads', 'Profile Sharing', 'Neural Insights', 'Research Forum'].map(f => (
+                    <div key={f} style={{
+                      padding: '5px 14px',
+                      background: 'rgba(0,230,118,0.08)',
+                      border: '1px solid rgba(0,230,118,0.2)',
+                      borderRadius: 20,
+                      fontSize: 10, color: '#00e676', letterSpacing: '1.5px', textTransform: 'uppercase',
+                    }}>{f}</div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -1486,7 +1516,6 @@ export default function ProfileSelector({ selectedId, onSelect, onBackToDashboar
           <div className="nn-topbar-nav" style={{display:'flex',alignItems:'center',gap:4}}>
             <button style={styles.navLink} onClick={openAbout}>About Us</button>
             <button style={styles.navLink} onClick={openResearch}>Research</button>
-            <button style={styles.navLink} onClick={openCommunity}>Community</button>
             <button style={styles.navLink} onClick={openSupport}>Support</button>
             <button style={styles.navLink} onClick={openCopyright}>Copyright</button>
           </div>
