@@ -43,42 +43,52 @@ html, body { overscroll-behavior: none; }
 /* ─────────────────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
 
-  /* 3D app: stack panels, show only active tab */
+  /* 3D app: stack panels vertically, clip overflow on the container itself */
   .nn-main {
     flex-direction: column;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden; /* panels handle their own scroll */
   }
 
-  .nn-left-panel {
-    width: 100% !important;
-    height: auto;
-    max-height: 50vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    display: none; /* hidden unless tab active */
-  }
-
-  .nn-right-panel {
-    width: 100% !important;
-    height: auto;
-    max-height: 60vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    display: none;
-  }
-
+  /* All panels hidden by default on mobile */
+  .nn-left-panel,
+  .nn-right-panel,
   .nn-center {
-    width: 100%;
-    height: 60vw;
-    min-height: 280px;
+    width: 100% !important;
     display: none;
+    /* Reset desktop sizing */
+    height: auto;
+    max-height: none;
   }
 
-  /* Show active panel via data attribute */
-  .nn-main[data-tab="3d"]      .nn-center      { display: block; height: 55vh; }
-  .nn-main[data-tab="metrics"] .nn-left-panel  { display: block; }
-  .nn-main[data-tab="chat"]    .nn-right-panel { display: block; }
+  /* ── Active panel fills remaining space and scrolls ── */
+  /* flex: 1 + min-height: 0 lets the panel grow to fill
+     (nn-main height) − (52px tab bar) without overflowing */
+
+  .nn-main[data-tab="metrics"] .nn-left-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nn-main[data-tab="chat"] .nn-right-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nn-main[data-tab="3d"] .nn-center {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden; /* Canvas fills the space, no extra scroll */
+  }
 
   /* Mobile tab bar */
   .nn-mobile-tabs {
