@@ -72,6 +72,28 @@ export function logout() {
   removeToken();
 }
 
+export async function getMe() {
+  const res = await fetch(`${BASE}/auth/me`, { headers: authHeaders() });
+  return handleResponse(res);
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  const res = await fetch(`${BASE}/auth/password`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  return handleResponse(res);
+}
+
+export async function deleteAccount() {
+  const res = await fetch(`${BASE}/auth/account`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
 // ─── Profiles ─────────────────────────────────────────────────────────────────
 export async function fetchProfiles() {
   const res = await fetch(`${BASE}/profiles`, { headers: authHeaders() });

@@ -365,7 +365,7 @@ const fStyles = {
 }
 
 // ─── Main ProfileDashboard ────────────────────────────────────────────────────
-export default function ProfileDashboard({ userEmail, onEnter, onLogout }) {
+export default function ProfileDashboard({ userEmail, username, onEnter, onLogout, onViewProfile }) {
   const [profiles, setProfiles]   = useState([])
   const [loading, setLoading]     = useState(true)
   const [showForm, setShowForm]   = useState(false)
@@ -479,8 +479,20 @@ export default function ProfileDashboard({ userEmail, onEnter, onLogout }) {
           ))}
         </div>
 
-        <div style={{display:'flex',alignItems:'center',gap:16}}>
-          <div style={{fontSize:12,color:'#3a4a60'}}>{userEmail}</div>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <button onClick={onViewProfile} style={{
+            display:'flex', alignItems:'center', gap:8,
+            padding:'6px 14px',
+            background:'rgba(0,204,255,0.06)',
+            border:'1px solid rgba(0,204,255,0.15)',
+            borderRadius:8, color:'#00ccff',
+            fontSize:11, fontWeight:'bold',
+            letterSpacing:'1.5px', textTransform:'uppercase',
+            fontFamily:'inherit', cursor:'pointer',
+          }}>
+            <span style={{fontSize:14}}>⚙</span>
+            {username || userEmail}
+          </button>
           <button className="dash-btn" onClick={handleLogout} style={{
             padding:'7px 16px',
             background:'rgba(255,51,102,0.08)',
@@ -488,7 +500,7 @@ export default function ProfileDashboard({ userEmail, onEnter, onLogout }) {
             borderRadius:8, color:'#ff3366',
             fontSize:11, fontWeight:'bold',
             letterSpacing:'1.5px', textTransform:'uppercase',
-            fontFamily:'inherit',
+            fontFamily:'inherit', cursor:'pointer',
           }}>
             Sign Out
           </button>

@@ -9,6 +9,7 @@ import ProfileSelector from './components/ProfileSelector'
 import WelcomeModal from './components/WelcomeModal'
 import AuthPage from './components/AuthPage'
 import ProfileDashboard from './components/ProfileDashboard'
+import ProfilePage from './components/ProfilePage'
 import { fetchProfile, clearChatHistory, getToken } from './api'
 
 // Decode JWT payload without a library to check expiry
@@ -31,6 +32,7 @@ function initialView() {
 export default function App() {
   const [view, setView]             = useState(initialView)
   const [userEmail, setUserEmail]   = useState(() => localStorage.getItem('nn_email') || '')
+  const [username, setUsername]     = useState(() => localStorage.getItem('nn_username') || '')
   const [selectedId, setSelectedId] = useState(null)
   const [profile, setProfile]       = useState(null)
   const [selectedRegion, setSelectedRegion] = useState(null)
@@ -67,7 +69,9 @@ export default function App() {
   useEffect(() => {
     const handler = () => {
       localStorage.removeItem('nn_email')
+      localStorage.removeItem('nn_username')
       setUserEmail('')
+      setUsername('')
       setSelectedId(null)
       setProfile(null)
       setView('auth')
@@ -79,13 +83,17 @@ export default function App() {
   // ── Auth handlers ────────────────────────────────────────────────────────────
   const handleAuth = useCallback((data) => {
     localStorage.setItem('nn_email', data.email || '')
+    localStorage.setItem('nn_username', data.username || '')
     setUserEmail(data.email || '')
+    setUsername(data.username || '')
     setView('dashboard')
   }, [])
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('nn_email')
+    localStorage.removeItem('nn_username')
     setUserEmail('')
+    setUsername('')
     setSelectedId(null)
     setProfile(null)
     setView('landing')
@@ -135,7 +143,20 @@ export default function App() {
     return (
       <ProfileDashboard
         userEmail={userEmail}
+        username={username}
         onEnter={handleEnterApp}
+        onLogout={handleLogout}
+        onViewProfile={() => setView('profile')}
+      />
+    )
+  }
+
+  if (view === 'profile') {
+    return (
+      <ProfilePage
+        username={username}
+        email={userEmail}
+        onBack={() => setView('dashboard')}
         onLogout={handleLogout}
       />
     )
