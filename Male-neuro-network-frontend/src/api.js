@@ -158,3 +158,15 @@ export async function checkHealth() {
   const res = await fetch(`${BASE}/health`);
   return res.json();
 }
+
+// ─── TTS ──────────────────────────────────────────────────────────────────────
+export async function synthesizeSpeech(text) {
+  const res = await fetch(`${BASE}/tts`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) throw new Error('TTS failed');
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
