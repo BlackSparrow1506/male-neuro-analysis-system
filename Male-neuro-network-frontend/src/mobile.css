@@ -43,26 +43,76 @@ html, body { overscroll-behavior: none; }
 /* ─────────────────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
 
-  /* 3D app: stack panels vertically, clip overflow on the container itself */
-  .nn-main {
-    flex-direction: column;
-    overflow: hidden; /* panels handle their own scroll */
+  /* ── Fixed bottom tab bar ────────────────────────────────────────────────
+     position:fixed ensures it's always visible regardless of what Three.js
+     Canvas does to the flex layout. viewport-fit=cover + safe-area-inset
+     extends it down to cover the iPhone home indicator bar.              */
+  .nn-mobile-tabs {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: rgba(6, 10, 26, 0.98);
+    border-top: 1px solid rgba(0, 204, 255, 0.15);
+    /* 52px for button area + home-indicator safe area on iOS */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    min-height: 52px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
-  /* All panels hidden by default on mobile */
+  .nn-mobile-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: transparent;
+    border: none;
+    color: #2a3a50;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.2s;
+    min-height: 52px; /* tappable area */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .nn-mobile-tab.active {
+    color: #00ccff;
+    border-top: 2px solid #00ccff;
+  }
+
+  .nn-mobile-tab-icon {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  /* ── Main content area ───────────────────────────────────────────────────
+     Pad the bottom so panels don't go under the fixed tab bar.
+     The calc mirrors: 52px tab bar + safe area inset.                    */
+  .nn-main {
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ── All panels hidden by default ──────────────────────────────────────── */
   .nn-left-panel,
   .nn-right-panel,
   .nn-center {
     width: 100% !important;
     display: none;
-    /* Reset desktop sizing */
     height: auto;
     max-height: none;
   }
 
-  /* ── Active panel fills remaining space and scrolls ── */
-  /* flex: 1 + min-height: 0 lets the panel grow to fill
-     (nn-main height) − (52px tab bar) without overflowing */
+  /* ── Active panel: fill all remaining space and scroll ─────────────────── */
 
   .nn-main[data-tab="metrics"] .nn-left-panel {
     display: flex;
@@ -87,50 +137,12 @@ html, body { overscroll-behavior: none; }
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    overflow: hidden; /* Canvas fills the space, no extra scroll */
+    overflow: hidden; /* Canvas fills the space; no scroll */
   }
 
-  /* Mobile tab bar */
-  .nn-mobile-tabs {
-    display: flex;
-    flex-shrink: 0;
-    background: rgba(6,10,26,0.98);
-    border-top: 1px solid rgba(0,204,255,0.1);
-    height: 52px;
-    order: 99; /* push to bottom */
-  }
-
-  .nn-mobile-tab {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    background: transparent;
-    border: none;
-    color: #2a3a50;
-    font-size: 9px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    font-family: inherit;
-    transition: color 0.2s;
-  }
-
-  .nn-mobile-tab.active {
-    color: #00ccff;
-    border-top: 2px solid #00ccff;
-  }
-
-  .nn-mobile-tab-icon {
-    font-size: 18px;
-    line-height: 1;
-  }
-
-  /* ProfileSelector top bar — compact on mobile */
+  /* ── ProfileSelector top bar — compact ─────────────────────────────────── */
   .nn-topbar-nav {
-    display: none; /* hide nav links on mobile */
+    display: none;
   }
 
   .nn-topbar-brand {
@@ -138,12 +150,11 @@ html, body { overscroll-behavior: none; }
     letter-spacing: 2px !important;
   }
 
-  /* ProfilePage grid → single column */
+  /* ── ProfilePage ─────────────────────────────────────────────────────────── */
   .nn-profile-grid {
     grid-template-columns: 1fr !important;
   }
 
-  /* Sidebar in ProfilePage → hidden on mobile */
   .nn-profile-sidebar {
     display: none !important;
   }
@@ -152,30 +163,27 @@ html, body { overscroll-behavior: none; }
     width: 100% !important;
   }
 
-  /* Auth page — ensure it scrolls */
+  /* ── Other scrollable pages ─────────────────────────────────────────────── */
   .nn-auth-scroll {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     height: 100vh;
   }
 
-  /* Dashboard — ensure it scrolls */
   .dash-scroll {
     -webkit-overflow-scrolling: touch !important;
   }
 
-  /* Community / modals — full height scroll */
   .nn-modal-overlay {
     -webkit-overflow-scrolling: touch !important;
   }
 
-  /* WelcomeModal — scrollable on small screens */
   .nn-welcome-scroll {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
   }
 
-  /* Danger card in profile — stack on mobile */
+  /* Danger card in profile — stack vertically */
   .nn-danger-card {
     flex-direction: column !important;
     align-items: flex-start !important;
@@ -188,9 +196,5 @@ html, body { overscroll-behavior: none; }
 @media (max-width: 480px) {
   .nn-profile-grid {
     grid-template-columns: 1fr !important;
-  }
-
-  .nn-center {
-    min-height: 240px;
   }
 }
