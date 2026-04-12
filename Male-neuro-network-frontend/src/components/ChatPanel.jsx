@@ -284,6 +284,8 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
+    minHeight: 0,
+    overflow: 'hidden', /* keeps inputArea pinned at bottom */
     background: 'rgba(10, 10, 20, 0.95)',
     borderLeft: '1px solid #1a3a5c',
   },
@@ -298,6 +300,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexShrink: 0,
   },
   clearBtn: {
     padding: '4px 10px',
@@ -344,6 +347,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
+    flexShrink: 0, /* never compress — always visible at bottom */
   },
   micSection: {
     display: 'flex',

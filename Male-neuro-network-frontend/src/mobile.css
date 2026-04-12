@@ -128,8 +128,7 @@ html, body { overscroll-behavior: none; }
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden; /* inner messages div scrolls; input stays pinned */
   }
 
   .nn-main[data-tab="3d"] .nn-center {
