@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { fetchProfiles, createProfile, updateProfile, deleteProfile, logout } from '../api'
-import { AboutUsModal, ResearchModal, SupportModal, CopyrightModal } from './ProfileSelector'
+import { AboutUsModal, ResearchModal, SupportModal, CopyrightModal, CommunityModal } from './ProfileSelector'
 
 // ─── CSS ───────────────────────────────────────────────────────────────────────
 const DASH_CSS = `
@@ -373,10 +373,11 @@ export default function ProfileDashboard({ userEmail, username, onEnter, onLogou
   const [saving, setSaving]       = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [error, setError]         = useState('')
-  const [showAbout, setShowAbout]         = useState(false)
-  const [showResearch, setShowResearch]   = useState(false)
-  const [showSupport, setShowSupport]     = useState(false)
-  const [showCopyright, setShowCopyright] = useState(false)
+  const [showAbout, setShowAbout]           = useState(false)
+  const [showResearch, setShowResearch]     = useState(false)
+  const [showSupport, setShowSupport]       = useState(false)
+  const [showCopyright, setShowCopyright]   = useState(false)
+  const [showCommunity, setShowCommunity]   = useState(false)
 
   // Inject CSS
   useEffect(() => {
@@ -431,10 +432,11 @@ export default function ProfileDashboard({ userEmail, username, onEnter, onLogou
       zIndex:500,
     }}>
       {/* Modals */}
-      {showAbout     && <AboutUsModal   onClose={() => setShowAbout(false)} />}
-      {showResearch  && <ResearchModal  onClose={() => setShowResearch(false)} />}
-      {showSupport   && <SupportModal   onClose={() => setShowSupport(false)} />}
-      {showCopyright && <CopyrightModal onClose={() => setShowCopyright(false)} />}
+      {showAbout     && <AboutUsModal    onClose={() => setShowAbout(false)} />}
+      {showResearch  && <ResearchModal   onClose={() => setShowResearch(false)} />}
+      {showSupport   && <SupportModal    onClose={() => setShowSupport(false)} />}
+      {showCopyright && <CopyrightModal  onClose={() => setShowCopyright(false)} />}
+      {showCommunity && <CommunityModal  onClose={() => setShowCommunity(false)} username={username} />}
 
       {/* Subtle background gradient */}
       <div style={{position:'fixed',inset:0,background:'radial-gradient(ellipse at 20% 20%, rgba(0,100,160,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(80,0,160,0.05) 0%, transparent 60%)',pointerEvents:'none'}}/>
@@ -460,10 +462,11 @@ export default function ProfileDashboard({ userEmail, username, onEnter, onLogou
         {/* Centre nav tabs */}
         <div style={{display:'flex',alignItems:'center',gap:2}}>
           {[
-            { label:'About Us',  action:() => setShowAbout(true)    },
-            { label:'Research',  action:() => setShowResearch(true)  },
-            { label:'Support',   action:() => setShowSupport(true)   },
-            { label:'Copyright', action:() => setShowCopyright(true) },
+            { label:'About Us',   action:() => setShowAbout(true)     },
+            { label:'Research',   action:() => setShowResearch(true)  },
+            { label:'Community',  action:() => setShowCommunity(true) },
+            { label:'Support',    action:() => setShowSupport(true)   },
+            { label:'Copyright',  action:() => setShowCopyright(true) },
           ].map(tab => (
             <button key={tab.label} onClick={tab.action} style={{
               padding:'5px 12px', background:'transparent', border:'none',

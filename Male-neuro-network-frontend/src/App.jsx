@@ -177,6 +177,7 @@ export default function App() {
         onSelect={handleSelectProfile}
         onBackToDashboard={handleBackToDashboard}
         userEmail={userEmail}
+        username={username}
         onAboutOpen={() => setIsAboutOpen(true)}
         onAboutClose={() => setIsAboutOpen(false)}
       />
