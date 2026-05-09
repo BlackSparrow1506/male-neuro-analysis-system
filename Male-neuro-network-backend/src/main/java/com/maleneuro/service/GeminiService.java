@@ -1,6 +1,8 @@
 package com.maleneuro.service;
 
+import com.maleneuro.config.ExternalApis;
 import com.maleneuro.model.ChatMessage;
+import com.maleneuro.model.ChatRole;
 import com.maleneuro.model.NeuralProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,14 +22,12 @@ public class GeminiService {
 
     private static final Logger log = LoggerFactory.getLogger(GeminiService.class);
 
-    private static final String GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-
     private final RestTemplate restTemplate;
 
     @Value("${groq.api.key}")
     private String apiKey;
 
-    @Value("${groq.model:llama-3.3-70b-versatile}")
+    @Value("${groq.model:" + ExternalApis.Groq.DEFAULT_MODEL + "}")
     private String model;
 
     @Value("${groq.history.limit:10}")
@@ -55,7 +55,7 @@ public class GeminiService {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                GROQ_URL,
+                ExternalApis.Groq.CHAT_COMPLETIONS_URL,
                 HttpMethod.POST,
                 request,
                 new ParameterizedTypeReference<Map<String, Object>>() {}
@@ -82,7 +82,7 @@ public class GeminiService {
         List<Map<String, Object>> messages = new ArrayList<>();
 
         // System prompt as first message
-        messages.add(Map.of("role", "system", "content", buildSystemPrompt(profile)));
+        messages.add(Map.of("role", ChatRole.SYSTEM.wire(), "content", buildSystemPrompt(profile)));
 
         // Prior conversation history
         int start = Math.max(0, priorHistory.size() - historyLimit);
@@ -92,7 +92,7 @@ public class GeminiService {
         }
 
         // Current user message
-        messages.add(Map.of("role", "user", "content", currentMessage));
+        messages.add(Map.of("role", ChatRole.USER.wire(), "content", currentMessage));
 
         return messages;
     }

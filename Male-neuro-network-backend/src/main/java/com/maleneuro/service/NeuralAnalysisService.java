@@ -1,8 +1,10 @@
 package com.maleneuro.service;
 
 import com.maleneuro.model.ChatMessage;
+import com.maleneuro.model.ChatRole;
 import com.maleneuro.model.NeuralConnection;
 import com.maleneuro.model.NeuralProfile;
+import com.maleneuro.model.ScorecardLevel;
 import com.maleneuro.repository.ChatMessageRepository;
 import com.maleneuro.repository.NeuralProfileRepository;
 import org.springframework.stereotype.Service;
@@ -105,7 +107,7 @@ public class NeuralAnalysisService {
                 .sorted(Comparator.comparing(ChatMessage::getTimestamp))
                 .collect(Collectors.toList());
 
-        chatRepo.save(new ChatMessage(profileId, "user", userMessage));
+        chatRepo.save(new ChatMessage(profileId, ChatRole.USER.wire(), userMessage));
 
         updateMetricsFromMessage(profile, userMessage);
         recalculateConnections(profile);
@@ -115,7 +117,7 @@ public class NeuralAnalysisService {
         profileRepo.save(profile);
 
         String response = geminiService.generateResponse(profile, priorHistory, userMessage);
-        ChatMessage aiMessage = new ChatMessage(profileId, "assistant", response);
+        ChatMessage aiMessage = new ChatMessage(profileId, ChatRole.ASSISTANT.wire(), response);
         return chatRepo.save(aiMessage);
     }
 
@@ -290,21 +292,21 @@ public class NeuralAnalysisService {
     }
 
     private String classify(double val) {
-        if (val >= 0.7) return "strength";
-        if (val >= 0.4) return "balanced";
-        return "weakness";
+        if (val >= 0.7) return ScorecardLevel.STRENGTH;
+        if (val >= 0.4) return ScorecardLevel.BALANCED;
+        return ScorecardLevel.WEAKNESS;
     }
 
     private String classifyInverse(double val) {
-        if (val <= 0.3) return "strength";
-        if (val <= 0.6) return "balanced";
-        return "weakness";
+        if (val <= 0.3) return ScorecardLevel.STRENGTH;
+        if (val <= 0.6) return ScorecardLevel.BALANCED;
+        return ScorecardLevel.WEAKNESS;
     }
 
     private String classifyCognitive(double val) {
-        if (val >= 0.8) return "weakness"; // overloaded
-        if (val >= 0.5) return "balanced";
-        return "strength"; // low load = good
+        if (val >= 0.8) return ScorecardLevel.WEAKNESS; // overloaded
+        if (val >= 0.5) return ScorecardLevel.BALANCED;
+        return ScorecardLevel.STRENGTH; // low load = good
     }
 
     // ========================================================

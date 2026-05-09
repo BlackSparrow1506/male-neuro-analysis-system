@@ -1,6 +1,7 @@
 package com.maleneuro.controller;
 
 import com.maleneuro.config.JwtUtil;
+import com.maleneuro.model.AuthProvider;
 import com.maleneuro.model.AuthRequest;
 import com.maleneuro.model.AuthResponse;
 import com.maleneuro.model.NeuralProfile;
@@ -160,7 +161,7 @@ public class AuthController {
             user.setEmail(email);
             user.setUsername(generateUsernameFromEmail(email, name));
             user.setEmailVerified(true);
-            user.setAuthProvider("GOOGLE");
+            user.setAuthProvider(AuthProvider.GOOGLE.name());
             user = userRepo.save(user);
         } else {
             user = existing.get();

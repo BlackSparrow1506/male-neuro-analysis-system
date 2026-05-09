@@ -1,5 +1,6 @@
 package com.maleneuro.service;
 
+import com.maleneuro.config.ExternalApis;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +15,6 @@ import java.util.Map;
 public class MailService {
 
     private static final Logger log = LoggerFactory.getLogger(MailService.class);
-    private static final String RESEND_API_URL = "https://api.resend.com/emails";
 
     private final RestTemplate restTemplate;
     private final String fromAddress;
@@ -71,7 +71,7 @@ public class MailService {
             );
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(RESEND_API_URL, request, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(ExternalApis.Resend.EMAILS_URL, request, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 log.info("Sent '{}' email to {}", subject, to);

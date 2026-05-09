@@ -1,22 +1,28 @@
+import { STORAGE_KEYS, EVENTS, ERROR_CODES, API_PATHS, HTTP_HEADERS, MIME } from './constants';
+
 const BASE = `${import.meta.env.VITE_API_BASE_URL || ''}/api`;
 
 // ─── Token storage ─────────────────────────────────────────────────────────────
-export const getToken   = ()  => localStorage.getItem('nn_token');
-export const setToken   = (t) => localStorage.setItem('nn_token', t);
-export const removeToken = () => localStorage.removeItem('nn_token');
+export const getToken    = ()  => localStorage.getItem(STORAGE_KEYS.TOKEN);
+export const setToken    = (t) => localStorage.setItem(STORAGE_KEYS.TOKEN, t);
+export const removeToken = ()  => localStorage.removeItem(STORAGE_KEYS.TOKEN);
+
+function jsonHeaders() {
+  return { [HTTP_HEADERS.CONTENT_TYPE]: MIME.JSON };
+}
 
 function authHeaders() {
   const token = getToken();
   return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    [HTTP_HEADERS.CONTENT_TYPE]: MIME.JSON,
+    ...(token ? { [HTTP_HEADERS.AUTHORIZATION]: `Bearer ${token}` } : {}),
   };
 }
 
 async function handleResponse(res) {
   if (res.status === 401) {
     removeToken();
-    window.dispatchEvent(new CustomEvent('nn:sessionExpired'));
+    window.dispatchEvent(new CustomEvent(EVENTS.SESSION_EXPIRED));
     throw new Error('Session expired. Please sign in again.');
   }
   if (!res.ok) {
@@ -31,9 +37,9 @@ async function handleResponse(res) {
 // Register requires a username + email + password. Returns a "verify your email"
 // response — no token is issued until the user verifies via the emailed link.
 export async function register(username, email, password) {
-  const res = await fetch(`${BASE}/auth/register`, {
+  const res = await fetch(`${BASE}${API_PATHS.AUTH.REGISTER}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonHeaders(),
     body: JSON.stringify({ username, email, password }),
   });
   return handleResponse(res);
@@ -42,15 +48,15 @@ export async function register(username, email, password) {
 // Login accepts a username (or email) + password. Backend returns 403 with
 // { emailVerified:false } if the account hasn't been verified yet.
 export async function login(usernameOrEmail, password) {
-  const res = await fetch(`${BASE}/auth/login`, {
+  const res = await fetch(`${BASE}${API_PATHS.AUTH.LOGIN}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonHeaders(),
     body: JSON.stringify({ username: usernameOrEmail, password }),
   });
   if (res.status === 403) {
     const body = await res.json().catch(() => ({}));
     const err = new Error(body.message || 'Please verify your email before signing in.');
-    err.code = 'EMAIL_NOT_VERIFIED';
+    err.code = ERROR_CODES.EMAIL_NOT_VERIFIED;
     err.email = body.email;
     throw err;
   }
@@ -62,9 +68,9 @@ export async function login(usernameOrEmail, password) {
 // Sign in (or auto-register) with a Google ID token. Returns the same shape
 // as login() and stores the JWT.
 export async function googleSignIn(idToken) {
-  const res = await fetch(`${BASE}/auth/google`, {
+  const res = await fetch(`${BASE}${API_PATHS.AUTH.GOOGLE}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonHeaders(),
     body: JSON.stringify({ idToken }),
   });
   const data = await handleResponse(res);
@@ -73,9 +79,9 @@ export async function googleSignIn(idToken) {
 }
 
 export async function resendVerification(email) {
-  const res = await fetch(`${BASE}/auth/resend-verification`, {
+  const res = await fetch(`${BASE}${API_PATHS.AUTH.RESEND_VERIFICATION}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonHeaders(),
     body: JSON.stringify({ email }),
   });
   return handleResponse(res);
@@ -86,12 +92,12 @@ export function logout() {
 }
 
 export async function getMe() {
-  const res = await fetch(`${BASE}/auth/me`, { headers: authHeaders() });
+  const res = await fetch(`${BASE}${API_PATHS.AUTH.ME}`, { headers: authHeaders() });
   return handleResponse(res);
 }
 
 export async function changePassword(currentPassword, newPassword) {
-  const res = await fetch(`${BASE}/auth/password`, {
+  const res = await fetch(`${BASE}${API_PATHS.AUTH.PASSWORD}`, {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify({ currentPassword, newPassword }),
@@ -100,7 +106,7 @@ export async function changePassword(currentPassword, newPassword) {
 }
 
 export async function deleteAccount() {
-  const res = await fetch(`${BASE}/auth/account`, {
+  const res = await fetch(`${BASE}${API_PATHS.AUTH.ACCOUNT}`, {
     method: 'DELETE',
     headers: authHeaders(),
   });
@@ -109,17 +115,17 @@ export async function deleteAccount() {
 
 // ─── Profiles ─────────────────────────────────────────────────────────────────
 export async function fetchProfiles() {
-  const res = await fetch(`${BASE}/profiles`, { headers: authHeaders() });
+  const res = await fetch(`${BASE}${API_PATHS.PROFILES}`, { headers: authHeaders() });
   return handleResponse(res);
 }
 
 export async function fetchProfile(id) {
-  const res = await fetch(`${BASE}/profiles/${id}`, { headers: authHeaders() });
+  const res = await fetch(`${BASE}${API_PATHS.PROFILES}/${id}`, { headers: authHeaders() });
   return handleResponse(res);
 }
 
 export async function createProfile(data) {
-  const res = await fetch(`${BASE}/profiles`, {
+  const res = await fetch(`${BASE}${API_PATHS.PROFILES}`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify(data),
@@ -128,7 +134,7 @@ export async function createProfile(data) {
 }
 
 export async function updateProfile(id, data) {
-  const res = await fetch(`${BASE}/profiles/${id}`, {
+  const res = await fetch(`${BASE}${API_PATHS.PROFILES}/${id}`, {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify(data),
@@ -137,7 +143,7 @@ export async function updateProfile(id, data) {
 }
 
 export async function deleteProfile(id) {
-  const res = await fetch(`${BASE}/profiles/${id}`, {
+  const res = await fetch(`${BASE}${API_PATHS.PROFILES}/${id}`, {
     method: 'DELETE',
     headers: authHeaders(),
   });
@@ -146,7 +152,7 @@ export async function deleteProfile(id) {
 
 // ─── Chat ─────────────────────────────────────────────────────────────────────
 export async function clearChatHistory(profileId) {
-  const res = await fetch(`${BASE}/chat/${profileId}/history`, {
+  const res = await fetch(`${BASE}${API_PATHS.CHAT}/${profileId}/history`, {
     method: 'DELETE',
     headers: authHeaders(),
   });
@@ -154,7 +160,7 @@ export async function clearChatHistory(profileId) {
 }
 
 export async function sendChatMessage(profileId, message) {
-  const res = await fetch(`${BASE}/chat/${profileId}`, {
+  const res = await fetch(`${BASE}${API_PATHS.CHAT}/${profileId}`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ message }),
@@ -163,23 +169,23 @@ export async function sendChatMessage(profileId, message) {
 }
 
 export async function fetchChatHistory(profileId) {
-  const res = await fetch(`${BASE}/chat/${profileId}/history`, { headers: authHeaders() });
+  const res = await fetch(`${BASE}${API_PATHS.CHAT}/${profileId}/history`, { headers: authHeaders() });
   return handleResponse(res);
 }
 
 export async function checkHealth() {
-  const res = await fetch(`${BASE}/health`);
+  const res = await fetch(`${BASE}${API_PATHS.HEALTH}`);
   return res.json();
 }
 
 // ─── Gita Guidance ────────────────────────────────────────────────────────────
 export async function fetchGitaGuidance(profileId) {
-  const res = await fetch(`${BASE}/gita/${profileId}/guidance`, { headers: authHeaders() });
+  const res = await fetch(`${BASE}${API_PATHS.GITA.GUIDANCE}/${profileId}/guidance`, { headers: authHeaders() });
   return handleResponse(res);
 }
 
 export async function translateGitaText(text, language) {
-  const res = await fetch(`${BASE}/gita/translate`, {
+  const res = await fetch(`${BASE}${API_PATHS.GITA.TRANSLATE}`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ text, language }),
@@ -189,7 +195,7 @@ export async function translateGitaText(text, language) {
 
 // ─── TTS ──────────────────────────────────────────────────────────────────────
 export async function synthesizeSpeech(text) {
-  const res = await fetch(`${BASE}/tts`, {
+  const res = await fetch(`${BASE}${API_PATHS.TTS}`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ text }),

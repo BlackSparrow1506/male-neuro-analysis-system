@@ -12,6 +12,7 @@ import AuthPage from './components/AuthPage'
 import ProfileDashboard from './components/ProfileDashboard'
 import ProfilePage from './components/ProfilePage'
 import { fetchProfile, clearChatHistory, getToken } from './api'
+import { STORAGE_KEYS, EVENTS } from './constants'
 
 // Decode JWT payload without a library to check expiry
 function isTokenAlive() {
@@ -32,9 +33,9 @@ function initialView() {
 
 export default function App() {
   const [view, setView]             = useState(initialView)
-  const [userEmail, setUserEmail]   = useState(() => localStorage.getItem('nn_email') || '')
-  const [username, setUsername]     = useState(() => localStorage.getItem('nn_username') || '')
-  const [emailVerified, setEmailVerified] = useState(() => localStorage.getItem('nn_emailVerified') === 'true')
+  const [userEmail, setUserEmail]   = useState(() => localStorage.getItem(STORAGE_KEYS.EMAIL) || '')
+  const [username, setUsername]     = useState(() => localStorage.getItem(STORAGE_KEYS.USERNAME) || '')
+  const [emailVerified, setEmailVerified] = useState(() => localStorage.getItem(STORAGE_KEYS.EMAIL_VERIFIED) === 'true')
   const [selectedId, setSelectedId] = useState(null)
   const [profile, setProfile]       = useState(null)
   const [selectedRegion, setSelectedRegion] = useState(null)
@@ -71,9 +72,9 @@ export default function App() {
   // ── Session expiry (fired by api.js on 401) ───────────────────────────────
   useEffect(() => {
     const handler = () => {
-      localStorage.removeItem('nn_email')
-      localStorage.removeItem('nn_username')
-      localStorage.removeItem('nn_emailVerified')
+      localStorage.removeItem(STORAGE_KEYS.EMAIL)
+      localStorage.removeItem(STORAGE_KEYS.USERNAME)
+      localStorage.removeItem(STORAGE_KEYS.EMAIL_VERIFIED)
       setUserEmail('')
       setUsername('')
       setEmailVerified(false)
@@ -81,15 +82,15 @@ export default function App() {
       setProfile(null)
       setView('auth')
     }
-    window.addEventListener('nn:sessionExpired', handler)
-    return () => window.removeEventListener('nn:sessionExpired', handler)
+    window.addEventListener(EVENTS.SESSION_EXPIRED, handler)
+    return () => window.removeEventListener(EVENTS.SESSION_EXPIRED, handler)
   }, [])
 
   // ── Auth handlers ────────────────────────────────────────────────────────────
   const handleAuth = useCallback((data) => {
-    localStorage.setItem('nn_email', data.email || '')
-    localStorage.setItem('nn_username', data.username || '')
-    localStorage.setItem('nn_emailVerified', data.emailVerified ? 'true' : 'false')
+    localStorage.setItem(STORAGE_KEYS.EMAIL, data.email || '')
+    localStorage.setItem(STORAGE_KEYS.USERNAME, data.username || '')
+    localStorage.setItem(STORAGE_KEYS.EMAIL_VERIFIED, data.emailVerified ? 'true' : 'false')
     setUserEmail(data.email || '')
     setUsername(data.username || '')
     setEmailVerified(!!data.emailVerified)
@@ -97,9 +98,9 @@ export default function App() {
   }, [])
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('nn_email')
-    localStorage.removeItem('nn_username')
-    localStorage.removeItem('nn_emailVerified')
+    localStorage.removeItem(STORAGE_KEYS.EMAIL)
+    localStorage.removeItem(STORAGE_KEYS.USERNAME)
+    localStorage.removeItem(STORAGE_KEYS.EMAIL_VERIFIED)
     setUserEmail('')
     setUsername('')
     setEmailVerified(false)
@@ -168,7 +169,7 @@ export default function App() {
         emailVerified={emailVerified}
         onEmailVerifiedChange={(v) => {
           setEmailVerified(v)
-          localStorage.setItem('nn_emailVerified', v ? 'true' : 'false')
+          localStorage.setItem(STORAGE_KEYS.EMAIL_VERIFIED, v ? 'true' : 'false')
         }}
         onBack={() => setView('dashboard')}
         onLogout={handleLogout}

@@ -1,5 +1,6 @@
 package com.maleneuro.controller;
 
+import com.maleneuro.config.ExternalApis;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,10 +17,8 @@ public class TtsController {
 
     private static final Logger log = LoggerFactory.getLogger(TtsController.class);
 
-    // Adam voice — professional male, works on free ElevenLabs tier
-    private static final String VOICE_ID = "TUlcnUIOBqEFnmlLvlAL";
     private static final String ELEVENLABS_URL =
-            "https://api.elevenlabs.io/v1/text-to-speech/" + VOICE_ID;
+            ExternalApis.ElevenLabs.ttsUrl(ExternalApis.ElevenLabs.DEFAULT_VOICE_ID);
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final String apiKey;
@@ -28,7 +27,7 @@ public class TtsController {
         this.apiKey = apiKey;
     }
 
-    @PostMapping(produces = "audio/mpeg")
+    @PostMapping(produces = ExternalApis.ElevenLabs.AUDIO_MIME)
     public ResponseEntity<byte[]> synthesize(@RequestBody Map<String, String> req) {
         String text = req.get("text");
         if (text == null || text.isBlank()) {
@@ -46,11 +45,11 @@ public class TtsController {
             HttpHeaders headers = new HttpHeaders();
             headers.set("xi-api-key", apiKey);
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(List.of(MediaType.parseMediaType("audio/mpeg")));
+            headers.setAccept(List.of(MediaType.parseMediaType(ExternalApis.ElevenLabs.AUDIO_MIME)));
 
             Map<String, Object> body = Map.of(
                     "text", text,
-                    "model_id", "eleven_turbo_v2",
+                    "model_id", ExternalApis.ElevenLabs.DEFAULT_MODEL,
                     "voice_settings", Map.of(
                             "stability", 0.45,
                             "similarity_boost", 0.80,
@@ -67,7 +66,7 @@ public class TtsController {
             );
 
             HttpHeaders out = new HttpHeaders();
-            out.setContentType(MediaType.parseMediaType("audio/mpeg"));
+            out.setContentType(MediaType.parseMediaType(ExternalApis.ElevenLabs.AUDIO_MIME));
             return ResponseEntity.ok().headers(out).body(response.getBody());
 
         } catch (Exception e) {

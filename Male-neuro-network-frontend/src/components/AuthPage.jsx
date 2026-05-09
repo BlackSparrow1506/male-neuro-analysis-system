@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import { login, register, resendVerification, googleSignIn } from '../api'
+import { ERROR_CODES } from '../constants'
 
 // ─── Reuse the same interstellar canvas ───────────────────────────────────────
 function hexToRgb(hex) {
@@ -378,7 +379,7 @@ export default function AuthPage({ onAuth }) {
         setStage('verify-pending')
       }
     } catch (err) {
-      if (err.code === 'EMAIL_NOT_VERIFIED') {
+      if (err.code === ERROR_CODES.EMAIL_NOT_VERIFIED) {
         setPendingEmail(err.email || '')
         setPendingUsername(username.trim())
         setStage('verify-pending')

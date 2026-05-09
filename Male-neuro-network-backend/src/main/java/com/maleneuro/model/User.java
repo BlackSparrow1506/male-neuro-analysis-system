@@ -25,7 +25,7 @@ public class User {
     private String verificationToken;
     private Instant verificationTokenExpiresAt;
 
-    private String authProvider = "LOCAL";
+    private String authProvider = AuthProvider.LOCAL.name();
 
     private Instant createdAt = Instant.now();
 

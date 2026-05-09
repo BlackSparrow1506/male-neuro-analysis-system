@@ -1,6 +1,9 @@
 package com.maleneuro.service;
 
+import com.maleneuro.config.ExternalApis;
+import com.maleneuro.model.ChatRole;
 import com.maleneuro.model.NeuralProfile;
+import com.maleneuro.model.ScorecardLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,8 +25,6 @@ public class GitaService {
 
     private static final Logger log = LoggerFactory.getLogger(GitaService.class);
 
-    private static final String GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-
     private static final Pattern DEVANAGARI = Pattern.compile("[\\u0900-\\u097F]");
     private static final Pattern SHLOKA_BLOCK = Pattern.compile(
         "SHLOKA_SANSKRIT:\\s*(.*?)(?=\\nSHLOKA_TRANSLITERATION:|\\nMEANING_ENGLISH:|\\n---|$)",
@@ -35,7 +36,7 @@ public class GitaService {
     @Value("${groq.api.key}")
     private String apiKey;
 
-    @Value("${groq.model:llama-3.3-70b-versatile}")
+    @Value("${groq.model:" + ExternalApis.Groq.DEFAULT_MODEL + "}")
     private String model;
 
     public GitaService(RestTemplate restTemplate) {
@@ -157,7 +158,7 @@ public class GitaService {
     private String buildGuidancePrompt(NeuralProfile p) {
         Map<String, String> sc = p.getScorecard() != null ? p.getScorecard() : Map.of();
         List<String> weaknesses = new ArrayList<>();
-        sc.forEach((k, v) -> { if ("weakness".equals(v)) weaknesses.add(k); });
+        sc.forEach((k, v) -> { if (ScorecardLevel.WEAKNESS.equals(v)) weaknesses.add(k); });
 
         // If no formal weakness flag, derive from low values so we always have something to advise on.
         if (weaknesses.isEmpty()) {
@@ -245,7 +246,7 @@ public class GitaService {
     private String callGroq(String prompt, double temperature, int maxTokens) {
         Map<String, Object> requestBody = Map.of(
             "model", model,
-            "messages", List.of(Map.of("role", "user", "content", prompt)),
+            "messages", List.of(Map.of("role", ChatRole.USER.wire(), "content", prompt)),
             "temperature", temperature,
             "max_tokens", maxTokens
         );
@@ -258,7 +259,7 @@ public class GitaService {
 
         try {
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                GROQ_URL,
+                ExternalApis.Groq.CHAT_COMPLETIONS_URL,
                 HttpMethod.POST,
                 request,
                 new ParameterizedTypeReference<Map<String, Object>>() {}
