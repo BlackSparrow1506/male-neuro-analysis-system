@@ -20,6 +20,8 @@ const LANGUAGES = [
   { code: 'arabic',     label: 'Arabic' },
 ]
 
+const DEVANAGARI_RE = /[ऀ-ॿ]/
+
 // Parse the structured guidance text from the backend into card objects.
 // The model is asked to emit blocks of LABEL: value lines separated by `---`.
 function parseGuidance(raw) {
@@ -40,7 +42,7 @@ function parseGuidance(raw) {
     const flush = () => {
       if (currentKey) card[currentKey] = currentVal.join('\n').trim()
     }
-    const KEY_RE = /^(METRIC|TITLE|SITUATION|REFERENCE|SHLOKA_SANSKRIT|SHLOKA_TRANSLITERATION|MEANING_ENGLISH|IMPACT|GITA_ADVICE):\s*(.*)$/
+    const KEY_RE = /^(METRIC|TITLE|SCORE_LINE|SITUATION|REFERENCE|SHLOKA_SANSKRIT|SHLOKA_TRANSLITERATION|MEANING_ENGLISH|IMPACT|GITA_ADVICE):\s*(.*)$/
     for (const line of lines) {
       const m = line.match(KEY_RE)
       if (m) {
@@ -134,6 +136,8 @@ function GitaCard({ card, language, onLanguageChange }) {
     )
   }
 
+  const sanskritIsValid = card.SHLOKA_SANSKRIT && DEVANAGARI_RE.test(card.SHLOKA_SANSKRIT)
+
   return (
     <div style={styles.card}>
       <div style={styles.cardTopRow}>
@@ -144,8 +148,14 @@ function GitaCard({ card, language, onLanguageChange }) {
         <div style={styles.cardRef}>{card.REFERENCE}</div>
       </div>
 
+      {card.SCORE_LINE && (
+        <div style={styles.scoreLine}>{card.SCORE_LINE}</div>
+      )}
+
       <div style={styles.shlokaBox}>
-        <div style={styles.shlokaSanskrit}>{card.SHLOKA_SANSKRIT}</div>
+        {sanskritIsValid && (
+          <div style={styles.shlokaSanskrit}>{card.SHLOKA_SANSKRIT}</div>
+        )}
         <div style={styles.shlokaTransliteration}>{card.SHLOKA_TRANSLITERATION}</div>
       </div>
 
@@ -347,6 +357,18 @@ const styles = {
     textTransform: 'uppercase',
     letterSpacing: '1px',
     whiteSpace: 'nowrap',
+  },
+  scoreLine: {
+    fontSize: 12,
+    color: '#ffd180',
+    background: 'rgba(255,112,67,0.10)',
+    border: '1px solid #3a2810',
+    borderLeft: '3px solid #ff7043',
+    padding: '10px 14px',
+    borderRadius: 6,
+    marginBottom: 14,
+    lineHeight: 1.55,
+    fontStyle: 'italic',
   },
   shlokaBox: {
     background: 'rgba(255,170,0,0.04)',
