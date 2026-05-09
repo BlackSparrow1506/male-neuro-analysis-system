@@ -34,6 +34,7 @@ export default function App() {
   const [view, setView]             = useState(initialView)
   const [userEmail, setUserEmail]   = useState(() => localStorage.getItem('nn_email') || '')
   const [username, setUsername]     = useState(() => localStorage.getItem('nn_username') || '')
+  const [emailVerified, setEmailVerified] = useState(() => localStorage.getItem('nn_emailVerified') === 'true')
   const [selectedId, setSelectedId] = useState(null)
   const [profile, setProfile]       = useState(null)
   const [selectedRegion, setSelectedRegion] = useState(null)
@@ -72,8 +73,10 @@ export default function App() {
     const handler = () => {
       localStorage.removeItem('nn_email')
       localStorage.removeItem('nn_username')
+      localStorage.removeItem('nn_emailVerified')
       setUserEmail('')
       setUsername('')
+      setEmailVerified(false)
       setSelectedId(null)
       setProfile(null)
       setView('auth')
@@ -86,16 +89,20 @@ export default function App() {
   const handleAuth = useCallback((data) => {
     localStorage.setItem('nn_email', data.email || '')
     localStorage.setItem('nn_username', data.username || '')
+    localStorage.setItem('nn_emailVerified', data.emailVerified ? 'true' : 'false')
     setUserEmail(data.email || '')
     setUsername(data.username || '')
+    setEmailVerified(!!data.emailVerified)
     setView('dashboard')
   }, [])
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('nn_email')
     localStorage.removeItem('nn_username')
+    localStorage.removeItem('nn_emailVerified')
     setUserEmail('')
     setUsername('')
+    setEmailVerified(false)
     setSelectedId(null)
     setProfile(null)
     setView('landing')
@@ -158,6 +165,11 @@ export default function App() {
       <ProfilePage
         username={username}
         email={userEmail}
+        emailVerified={emailVerified}
+        onEmailVerifiedChange={(v) => {
+          setEmailVerified(v)
+          localStorage.setItem('nn_emailVerified', v ? 'true' : 'false')
+        }}
         onBack={() => setView('dashboard')}
         onLogout={handleLogout}
       />

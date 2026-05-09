@@ -152,18 +152,30 @@ public class AuthController {
         String email = payload.getEmail().toLowerCase();
         String name  = (String) payload.get("name");
 
-        User user = userRepo.findByEmail(email).orElseGet(() -> {
-            User u = new User();
-            u.setEmail(email);
-            u.setUsername(generateUsernameFromEmail(email, name));
-            u.setEmailVerified(true);
-            u.setAuthProvider("GOOGLE");
-            return userRepo.save(u);
-        });
-
-        if (!user.isEmailVerified()) {
+        Optional<User> existing = userRepo.findByEmail(email);
+        boolean isNew = existing.isEmpty();
+        User user;
+        if (isNew) {
+            user = new User();
+            user.setEmail(email);
+            user.setUsername(generateUsernameFromEmail(email, name));
             user.setEmailVerified(true);
-            userRepo.save(user);
+            user.setAuthProvider("GOOGLE");
+            user = userRepo.save(user);
+        } else {
+            user = existing.get();
+            if (!user.isEmailVerified()) {
+                user.setEmailVerified(true);
+                user = userRepo.save(user);
+            }
+        }
+
+        if (isNew) {
+            try {
+                mailService.sendWelcomeEmail(user.getEmail(), user.getUsername());
+            } catch (Exception e) {
+                log.error("Failed to send welcome email to {}: {}", user.getEmail(), e.getMessage());
+            }
         }
 
         String token = jwtUtil.generateToken(user.getId());

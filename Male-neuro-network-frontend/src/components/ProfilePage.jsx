@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
-import { changePassword, deleteAccount, logout } from '../api'
+import { changePassword, deleteAccount, logout, resendVerification } from '../api'
 
-export default function ProfilePage({ username, email, onBack, onLogout }) {
+export default function ProfilePage({ username, email, emailVerified = true, onEmailVerifiedChange, onBack, onLogout }) {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword]         = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -14,6 +14,23 @@ export default function ProfilePage({ username, email, onBack, onLogout }) {
   const [showCurrent, setShowCurrent]             = useState(false)
   const [showNew, setShowNew]                     = useState(false)
   const [showConfirm, setShowConfirm]             = useState(false)
+  const [verifyLoading, setVerifyLoading]         = useState(false)
+  const [verifyMsg, setVerifyMsg]                 = useState(null)
+  const [verifyError, setVerifyError]             = useState(null)
+
+  async function handleResendVerification() {
+    setVerifyLoading(true)
+    setVerifyMsg(null)
+    setVerifyError(null)
+    try {
+      await resendVerification(email)
+      setVerifyMsg('Verification email sent. Check your inbox.')
+    } catch (err) {
+      setVerifyError(err.message || 'Failed to send verification email')
+    } finally {
+      setVerifyLoading(false)
+    }
+  }
 
   async function handleChangePassword() {
     setPwMsg(null)
@@ -90,7 +107,11 @@ export default function ProfilePage({ username, email, onBack, onLogout }) {
             <div>
               <div style={styles.identityName}>{username}</div>
               <div style={styles.identityEmail}>{email}</div>
-              <div style={styles.badge}>✓ Verified Account</div>
+              {emailVerified ? (
+                <div style={styles.badge}>✓ Verified Account</div>
+              ) : (
+                <div style={styles.badgeUnverified}>! Email Not Verified</div>
+              )}
             </div>
           </div>
 
@@ -113,7 +134,9 @@ export default function ProfilePage({ username, email, onBack, onLogout }) {
               </div>
               <div style={styles.field}>
                 <div style={styles.fieldLabel}>Account Status</div>
-                <div style={{...styles.fieldValue, color:'#00e676'}}>Active · Verified</div>
+                <div style={{...styles.fieldValue, color: emailVerified ? '#00e676' : '#ff9800'}}>
+                  {emailVerified ? 'Active · Verified' : 'Active · Email Not Verified'}
+                </div>
               </div>
               <div style={{...styles.field, borderBottom:'none'}}>
                 <div style={styles.fieldLabel}>Platform</div>
@@ -188,6 +211,33 @@ export default function ProfilePage({ username, email, onBack, onLogout }) {
               </button>
             </div>
 
+          </div>
+
+          {/* Email verification */}
+          <div style={emailVerified ? styles.verifyCardOk : styles.verifyCardWarn}>
+            <div style={styles.verifyLeft}>
+              <div style={emailVerified ? styles.verifyTitleOk : styles.verifyTitleWarn}>
+                {emailVerified ? 'Email Verified' : 'Verify Your Email'}
+              </div>
+              <div style={styles.verifyDesc}>
+                {emailVerified
+                  ? <>Your email <strong style={{color:'#a8b2d1'}}>{email}</strong> is confirmed. You're all set.</>
+                  : <>We need to confirm <strong style={{color:'#a8b2d1'}}>{email}</strong> belongs to you. Click resend, then click the link in the email.</>}
+              </div>
+              {verifyMsg   && <div style={{...styles.successMsg, marginTop:12}}>{verifyMsg}</div>}
+              {verifyError && <div style={{...styles.errorMsg,   marginTop:12}}>{verifyError}</div>}
+            </div>
+            <div style={styles.verifyRight}>
+              {!emailVerified && (
+                <button
+                  onClick={handleResendVerification}
+                  disabled={verifyLoading}
+                  style={styles.verifyBtn}
+                >
+                  {verifyLoading ? 'Sending…' : 'Resend Verification Email'}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Danger zone */}
@@ -388,6 +438,17 @@ const styles = {
     color: '#00e676',
     letterSpacing: '1px',
   },
+  badgeUnverified: {
+    display: 'inline-block',
+    marginTop: 8,
+    padding: '3px 10px',
+    background: 'rgba(255,152,0,0.1)',
+    border: '1px solid rgba(255,152,0,0.3)',
+    borderRadius: 20,
+    fontSize: 10,
+    color: '#ff9800',
+    letterSpacing: '1px',
+  },
 
   // Grid
   grid: {
@@ -498,6 +559,63 @@ const styles = {
     borderRadius: 8,
     color: '#00e676',
     fontSize: 11,
+  },
+
+  // Email verification card
+  verifyCardOk: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 32,
+    padding: '24px 32px',
+    background: 'rgba(0,230,118,0.04)',
+    border: '1px solid rgba(0,230,118,0.18)',
+    borderRadius: 16,
+  },
+  verifyCardWarn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 32,
+    padding: '24px 32px',
+    background: 'rgba(255,152,0,0.04)',
+    border: '1px solid rgba(255,152,0,0.25)',
+    borderRadius: 16,
+  },
+  verifyLeft: { flex: 1 },
+  verifyRight: { flexShrink: 0 },
+  verifyTitleOk: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#00e676',
+    letterSpacing: '1px',
+    marginBottom: 6,
+  },
+  verifyTitleWarn: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#ff9800',
+    letterSpacing: '1px',
+    marginBottom: 6,
+  },
+  verifyDesc: {
+    fontSize: 11,
+    color: '#4a6080',
+    lineHeight: 1.7,
+    maxWidth: 520,
+  },
+  verifyBtn: {
+    padding: '10px 22px',
+    background: 'rgba(255,152,0,0.1)',
+    border: '1px solid rgba(255,152,0,0.35)',
+    borderRadius: 8,
+    color: '#ff9800',
+    fontSize: 11,
+    fontWeight: 'bold',
+    letterSpacing: '1.5px',
+    textTransform: 'uppercase',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
   },
 
   // Danger zone
