@@ -5,6 +5,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.List;
 
 @Document(collection = "audit_logs")
 public class AuditLog {
@@ -27,6 +28,9 @@ public class AuditLog {
     private String errorMessage;
 
     private String model;
+
+    private Integer evalScore;
+    private List<String> evalNotes;
 
     @Indexed
     private Instant timestamp;
@@ -64,6 +68,12 @@ public class AuditLog {
 
     public String getModel() { return model; }
     public void setModel(String model) { this.model = model; }
+
+    public Integer getEvalScore() { return evalScore; }
+    public void setEvalScore(Integer evalScore) { this.evalScore = evalScore; }
+
+    public List<String> getEvalNotes() { return evalNotes; }
+    public void setEvalNotes(List<String> evalNotes) { this.evalNotes = evalNotes; }
 
     public Instant getTimestamp() { return timestamp; }
     public void setTimestamp(Instant timestamp) { this.timestamp = timestamp; }

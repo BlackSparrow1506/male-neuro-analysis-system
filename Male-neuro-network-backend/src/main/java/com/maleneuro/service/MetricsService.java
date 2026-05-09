@@ -72,12 +72,19 @@ public class MetricsService {
         double perMinute = lookback.toSeconds() == 0 ? 0 : (count * 60.0) / lookback.toSeconds();
 
         List<Long> latencies = new ArrayList<>();
+        long evalSum = 0;
+        long evalCount = 0;
         for (AuditLog log : entries) {
             if (log.getLatencyMs() > 0) {
                 latencies.add(log.getLatencyMs());
             }
+            if (log.getEvalScore() != null) {
+                evalSum += log.getEvalScore();
+                evalCount++;
+            }
         }
         Collections.sort(latencies);
+        Double avgEval = evalCount == 0 ? null : round1((double) evalSum / evalCount);
 
         return new ActionStats(
                 action,
@@ -88,7 +95,9 @@ public class MetricsService {
                 round1(perMinute),
                 percentile(latencies, 50),
                 percentile(latencies, 95),
-                percentile(latencies, 99)
+                percentile(latencies, 99),
+                avgEval,
+                evalCount
         );
     }
 
@@ -119,7 +128,9 @@ public class MetricsService {
             double perMinute,
             long latencyP50Ms,
             long latencyP95Ms,
-            long latencyP99Ms) {}
+            long latencyP99Ms,
+            Double avgEvalScore,
+            long evalCount) {}
 
     public record BreakerStats(
             String name,

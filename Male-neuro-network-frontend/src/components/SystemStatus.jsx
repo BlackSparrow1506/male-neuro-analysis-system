@@ -100,6 +100,7 @@ export default function SystemStatus() {
                 <div style={{...styles.col, ...styles.colNum}}>p50</div>
                 <div style={{...styles.col, ...styles.colNum}}>p95</div>
                 <div style={{...styles.col, ...styles.colNum}}>p99</div>
+                <div style={{...styles.col, ...styles.colNum}}>Avg eval</div>
               </div>
               {snapshot.actions.map(a => (
                 <div key={a.action} style={styles.row}>
@@ -112,6 +113,9 @@ export default function SystemStatus() {
                   <div style={{...styles.col, ...styles.colNum}}>{fmtMs(a.latencyP50Ms)}</div>
                   <div style={{...styles.col, ...styles.colNum}}>{fmtMs(a.latencyP95Ms)}</div>
                   <div style={{...styles.col, ...styles.colNum}}>{fmtMs(a.latencyP99Ms)}</div>
+                  <div style={{...styles.col, ...styles.colNum, color: a.avgEvalScore == null ? '#4a6080' : a.avgEvalScore >= 80 ? '#00e676' : a.avgEvalScore >= 60 ? '#ff9800' : '#ff3366'}}>
+                    {a.avgEvalScore == null ? '—' : a.avgEvalScore.toFixed(0)}
+                  </div>
                 </div>
               ))}
             </div>
