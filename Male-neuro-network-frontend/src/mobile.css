@@ -38,6 +38,10 @@ html, body { overscroll-behavior: none; }
 .nn-center      { flex: 1; position: relative; background: #020610; overflow: hidden; }
 .nn-main        { flex: 1; display: flex; overflow: hidden; }
 
+/* Gita panel is desktop-hidden — Gita lives inside the center via view toggle on desktop.
+   On mobile it becomes its own bottom-tab destination (see media query below). */
+.nn-gita-panel  { display: none; }
+
 /* ─────────────────────────────────────────────────────────────────────────── */
 /* MOBILE  ≤ 768px                                                             */
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -105,7 +109,8 @@ html, body { overscroll-behavior: none; }
   /* ── All panels hidden by default ──────────────────────────────────────── */
   .nn-left-panel,
   .nn-right-panel,
-  .nn-center {
+  .nn-center,
+  .nn-gita-panel {
     width: 100% !important;
     display: none;
     height: auto;
@@ -137,6 +142,14 @@ html, body { overscroll-behavior: none; }
     flex: 1;
     min-height: 0;
     overflow: hidden; /* Canvas fills the space; no scroll */
+  }
+
+  .nn-main[data-tab="gita"] .nn-gita-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden; /* inner GitaPanel body scrolls */
   }
 
   /* ── ProfileSelector top bar — compact ─────────────────────────────────── */

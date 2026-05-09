@@ -4,6 +4,7 @@ import { OrbitControls, Stars } from '@react-three/drei'
 import NeuralNetwork3D from './components/NeuralNetwork3D'
 import BrainScan3D from './components/BrainScan3D'
 import ChatPanel from './components/ChatPanel'
+import GitaPanel from './components/GitaPanel'
 import MetricsPanel from './components/MetricsPanel'
 import ProfileSelector from './components/ProfileSelector'
 import WelcomeModal from './components/WelcomeModal'
@@ -189,20 +190,30 @@ export default function App() {
           <MetricsPanel profile={profile} selectedRegion={selectedRegion} />
         </div>
 
-        {/* Center: 3D Visualization */}
+        {/* Center: 3D Visualization or Gita Wisdom */}
         <div className="nn-center" style={{ ...styles.center, ...(isAboutOpen ? { visibility: 'hidden' } : {}) }}>
           <div style={styles.viewToggle}>
-            {['network', 'scan'].map(m => (
+            {[
+              { key: 'network', label: 'Neural Network' },
+              { key: 'scan',    label: 'Brain Scan' },
+              { key: 'gita',    label: 'Gita Wisdom' },
+            ].map(m => (
               <button
-                key={m}
-                style={{ ...styles.toggleBtn, ...(viewMode === m ? styles.toggleBtnActive : {}) }}
-                onClick={() => setViewMode(m)}
+                key={m.key}
+                style={{ ...styles.toggleBtn, ...(viewMode === m.key ? styles.toggleBtnActive : {}) }}
+                onClick={() => setViewMode(m.key)}
               >
-                {m === 'network' ? 'Neural Network' : 'Brain Scan'}
+                {m.label}
               </button>
             ))}
           </div>
 
+          {viewMode === 'gita' ? (
+            <div style={styles.gitaWrap}>
+              <GitaPanel profile={profile} />
+            </div>
+          ) : (
+          <>
           <Canvas
             camera={{ position: [0, 0, 7], fov: 50 }}
             style={{ background: viewMode === 'scan' ? '#01040a' : '#020610' }}
@@ -301,6 +312,8 @@ export default function App() {
                 : 'Hover regions · Click to select · Drag to orbit · Speak to influence brain activity'}
             </div>
           </div>
+          </>
+          )}
         </div>
 
         {/* Right: Chat */}
@@ -308,11 +321,17 @@ export default function App() {
           <ChatPanel key={chatKey} profileId={selectedId} onClearChat={handleClearChat} />
         </div>
 
+        {/* Mobile-only Gita panel (desktop accesses Gita via center toggle) */}
+        <div className="nn-gita-panel" style={styles.gitaMobilePanel}>
+          <GitaPanel profile={profile} />
+        </div>
+
         {/* Mobile bottom tab bar */}
         <div className="nn-mobile-tabs">
           {[
             { key: '3d',      icon: '◎', label: '3D View' },
             { key: 'metrics', icon: '◈', label: 'Metrics' },
+            { key: 'gita',    icon: '☸', label: 'Gita' },
             { key: 'chat',    icon: '⊕', label: 'Chat' },
           ].map(t => (
             <button
@@ -367,4 +386,14 @@ const styles = {
     transition: 'all 0.2s ease',
   },
   toggleBtnActive: { background: '#00ccff', color: '#000', boxShadow: '0 0 15px #00ccff66' },
+  gitaWrap: {
+    position: 'absolute',
+    inset: 0,
+    paddingTop: 56, /* leave room for the floating viewToggle pill */
+    display: 'flex',
+    overflow: 'hidden',
+  },
+  gitaMobilePanel: {
+    display: 'none',
+  },
 }

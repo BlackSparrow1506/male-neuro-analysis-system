@@ -159,6 +159,21 @@ export async function checkHealth() {
   return res.json();
 }
 
+// ─── Gita Guidance ────────────────────────────────────────────────────────────
+export async function fetchGitaGuidance(profileId) {
+  const res = await fetch(`${BASE}/gita/${profileId}/guidance`, { headers: authHeaders() });
+  return handleResponse(res);
+}
+
+export async function translateGitaText(text, language) {
+  const res = await fetch(`${BASE}/gita/translate`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ text, language }),
+  });
+  return handleResponse(res);
+}
+
 // ─── TTS ──────────────────────────────────────────────────────────────────────
 export async function synthesizeSpeech(text) {
   const res = await fetch(`${BASE}/tts`, {
