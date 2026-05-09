@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json.schemastore.org/mcp.json",
+  "_comment": "MCP server registrations shared across the team. Add servers under `mcpServers`. No Python tooling — use Node or native CLIs only.",
+  "mcpServers": {}
+}

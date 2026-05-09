@@ -23,3 +23,7 @@ dist/
 
 # Local JDK bundle
 openJdk-25.jdk/
+
+# Claude Code — local-only overrides
+CLAUDE.local.md
+.claude/settings.local.json

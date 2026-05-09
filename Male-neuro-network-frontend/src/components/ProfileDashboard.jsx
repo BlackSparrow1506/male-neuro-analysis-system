@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { fetchProfiles, createProfile, updateProfile, deleteProfile, logout } from '../api'
-import { AboutUsModal, ResearchModal, SupportModal, CopyrightModal, CommunityModal } from './ProfileSelector'
+import AboutUsModal from './modals/AboutUsModal'
+import ResearchModal from './modals/ResearchModal'
+import SupportModal from './modals/SupportModal'
+import CopyrightModal from './modals/CopyrightModal'
+import CommunityModal from './modals/CommunityModal'
 
 // ─── CSS ───────────────────────────────────────────────────────────────────────
 const DASH_CSS = `
