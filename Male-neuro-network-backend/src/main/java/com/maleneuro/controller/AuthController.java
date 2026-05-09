@@ -9,6 +9,7 @@ import com.maleneuro.model.User;
 import com.maleneuro.repository.ChatMessageRepository;
 import com.maleneuro.repository.NeuralProfileRepository;
 import com.maleneuro.repository.UserRepository;
+import com.maleneuro.service.AuditLogService;
 import com.maleneuro.service.GoogleAuthService;
 import com.maleneuro.service.MailService;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
@@ -46,6 +47,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final MailService mailService;
     private final GoogleAuthService googleAuthService;
+    private final AuditLogService auditLogService;
     private final String frontendUrl;
 
     public AuthController(UserRepository userRepo,
@@ -55,6 +57,7 @@ public class AuthController {
                           JwtUtil jwtUtil,
                           MailService mailService,
                           GoogleAuthService googleAuthService,
+                          AuditLogService auditLogService,
                           @Value("${app.frontend-url:http://localhost:5173}") String frontendUrl) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
@@ -63,6 +66,7 @@ public class AuthController {
         this.jwtUtil = jwtUtil;
         this.mailService = mailService;
         this.googleAuthService = googleAuthService;
+        this.auditLogService = auditLogService;
         this.frontendUrl = frontendUrl;
     }
 
@@ -297,12 +301,13 @@ public class AuthController {
         if (!userRepo.existsById(userId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found"));
         }
-        // Delete all chat messages for each profile, then delete profiles, then delete user
+        // Delete all chat messages for each profile, then delete profiles, audit logs, then delete user
         List<NeuralProfile> profiles = profileRepo.findByUserId(userId);
         for (NeuralProfile profile : profiles) {
             chatRepo.deleteByProfileId(profile.getId());
         }
         profileRepo.deleteAll(profiles);
+        auditLogService.deleteForUser(userId);
         userRepo.deleteById(userId);
         log.info("Account deleted for userId={}", userId);
         return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));

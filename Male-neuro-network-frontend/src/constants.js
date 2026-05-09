@@ -33,6 +33,9 @@ export const API_PATHS = Object.freeze({
   },
   TTS:      '/tts',
   HEALTH:   '/health',
+  AUDIT: {
+    ME: '/audit/me',
+  },
 });
 
 export const HTTP_HEADERS = Object.freeze({
