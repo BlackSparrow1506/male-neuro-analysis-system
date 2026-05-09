@@ -207,6 +207,12 @@ export async function fetchMyAuditLog(limit = 50) {
   return handleResponse(res);
 }
 
+// ─── Metrics / SLA snapshot ───────────────────────────────────────────────────
+export async function fetchMetrics(windowSeconds = 3600) {
+  const res = await fetch(`${BASE}${API_PATHS.METRICS}?windowSeconds=${windowSeconds}`, { headers: authHeaders() });
+  return handleResponse(res);
+}
+
 // ─── TTS ──────────────────────────────────────────────────────────────────────
 export async function synthesizeSpeech(text) {
   const res = await fetch(`${BASE}${API_PATHS.TTS}`, {

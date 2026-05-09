@@ -36,6 +36,7 @@ export const API_PATHS = Object.freeze({
   AUDIT: {
     ME: '/audit/me',
   },
+  METRICS: '/metrics',
 });
 
 export const HTTP_HEADERS = Object.freeze({
