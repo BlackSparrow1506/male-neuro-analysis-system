@@ -21,15 +21,18 @@ public class NeuralAnalysisService {
     private final ChatMessageRepository chatRepo;
     private final GeminiService geminiService;
     private final AuditLogService auditLogService;
+    private final GuardrailService guardrailService;
 
     public NeuralAnalysisService(NeuralProfileRepository profileRepo,
                                   ChatMessageRepository chatRepo,
                                   GeminiService geminiService,
-                                  AuditLogService auditLogService) {
+                                  AuditLogService auditLogService,
+                                  GuardrailService guardrailService) {
         this.profileRepo = profileRepo;
         this.chatRepo = chatRepo;
         this.geminiService = geminiService;
         this.auditLogService = auditLogService;
+        this.guardrailService = guardrailService;
     }
 
     // --- Profile CRUD ---
@@ -124,8 +127,12 @@ public class NeuralAnalysisService {
         String response = null;
         boolean success = false;
         String errorMessage = null;
+        List<String> redactedKinds = List.of();
         try {
-            response = geminiService.generateResponse(profile, priorHistory, userMessage);
+            String raw = geminiService.generateResponse(profile, priorHistory, userMessage);
+            GuardrailService.OutputFilter filter = guardrailService.filterOutput(raw);
+            response = filter.text();
+            redactedKinds = filter.redactedKinds();
             success = true;
             ChatMessage aiMessage = new ChatMessage(profileId, ChatRole.ASSISTANT.wire(), response);
             return chatRepo.save(aiMessage);
@@ -136,12 +143,16 @@ public class NeuralAnalysisService {
             AuditLog entry = new AuditLog();
             entry.setUserId(profile.getUserId());
             entry.setProfileId(profileId);
-            entry.setAction("chat.message");
+            entry.setAction(redactedKinds.isEmpty() ? "chat.message" : "chat.flagged");
             entry.setRequestPreview(userMessage);
             entry.setResponsePreview(response);
             entry.setLatencyMs(System.currentTimeMillis() - started);
             entry.setSuccess(success);
-            entry.setErrorMessage(errorMessage);
+            if (errorMessage != null) {
+                entry.setErrorMessage(errorMessage);
+            } else if (!redactedKinds.isEmpty()) {
+                entry.setErrorMessage("PII redacted from response: " + String.join(", ", redactedKinds));
+            }
             entry.setModel("groq");
             auditLogService.record(entry);
         }
