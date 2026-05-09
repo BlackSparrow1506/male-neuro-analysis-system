@@ -31,6 +31,9 @@ async function handleResponse(res) {
     if (res.status === 429) {
       err.code = 'RATE_LIMITED';
       err.retryAfterSeconds = body.retryAfterSeconds || Number(res.headers.get('Retry-After')) || null;
+    } else if (res.status === 422 && body.error === 'GUARDRAIL_BLOCKED') {
+      err.code = 'GUARDRAIL_BLOCKED';
+      err.category = body.category;
     }
     throw err;
   }

@@ -4,6 +4,7 @@ import com.maleneuro.model.AuditLog;
 import com.maleneuro.model.ChatMessage;
 import com.maleneuro.model.NeuralProfile;
 import com.maleneuro.service.AuditLogService;
+import com.maleneuro.service.GuardrailService;
 import com.maleneuro.service.NeuralAnalysisService;
 import com.maleneuro.service.RateLimitService;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,15 +28,18 @@ public class ChatController {
     private final NeuralAnalysisService analysisService;
     private final RateLimitService rateLimitService;
     private final AuditLogService auditLogService;
+    private final GuardrailService guardrailService;
     private final long perMinute;
 
     public ChatController(NeuralAnalysisService analysisService,
                           RateLimitService rateLimitService,
                           AuditLogService auditLogService,
+                          GuardrailService guardrailService,
                           @Value("${app.ratelimit.chat.per-minute:20}") long perMinute) {
         this.analysisService = analysisService;
         this.rateLimitService = rateLimitService;
         this.auditLogService = auditLogService;
+        this.guardrailService = guardrailService;
         this.perMinute = perMinute;
     }
 
@@ -54,8 +58,15 @@ public class ChatController {
             @RequestBody Map<String, String> body) {
         assertOwnership(userId, profileId);
         String message = body.get("message");
-        if (message == null || message.isBlank()) {
-            return ResponseEntity.badRequest().build();
+
+        GuardrailService.InputCheck check = guardrailService.checkInput(message);
+        if (!check.allowed()) {
+            recordGuardrailBlockedAudit(userId, profileId, message, check);
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(Map.of(
+                    "error", "GUARDRAIL_BLOCKED",
+                    "category", check.category(),
+                    "message", check.reason()
+            ));
         }
 
         RateLimitService.Decision decision = rateLimitService.tryAcquire(userId, ACTION, perMinute, WINDOW);
@@ -93,6 +104,17 @@ public class ChatController {
         entry.setRequestPreview(message);
         entry.setSuccess(false);
         entry.setErrorMessage("Rate limit exceeded — retry after " + d.retryAfterSeconds() + "s (limit " + d.limit() + "/min)");
+        auditLogService.record(entry);
+    }
+
+    private void recordGuardrailBlockedAudit(String userId, String profileId, String message, GuardrailService.InputCheck check) {
+        AuditLog entry = new AuditLog();
+        entry.setUserId(userId);
+        entry.setProfileId(profileId);
+        entry.setAction("chat.blocked");
+        entry.setRequestPreview(message);
+        entry.setSuccess(false);
+        entry.setErrorMessage("Guardrail block [" + check.category() + "]: " + check.reason());
         auditLogService.record(entry);
     }
 }

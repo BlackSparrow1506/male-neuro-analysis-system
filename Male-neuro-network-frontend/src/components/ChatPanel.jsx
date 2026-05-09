@@ -79,9 +79,14 @@ export default function ChatPanel({ profileId, onClearChat }) {
         speakText(reply.content)
       }
     } catch (err) {
-      const content = err?.code === 'RATE_LIMITED'
-        ? `Slow down — ${err.message}`
-        : (err?.message || 'Error: Could not reach backend.')
+      let content
+      if (err?.code === 'RATE_LIMITED') {
+        content = `Slow down — ${err.message}`
+      } else if (err?.code === 'GUARDRAIL_BLOCKED') {
+        content = `Blocked by safety guardrail (${err.category}): ${err.message}`
+      } else {
+        content = err?.message || 'Error: Could not reach backend.'
+      }
       setMessages(prev => [...prev, { role: 'assistant', content, timestamp: new Date().toISOString() }])
     }
     setLoading(false)
