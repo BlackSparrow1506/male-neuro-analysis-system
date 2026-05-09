@@ -67,7 +67,7 @@ const m = {
   },
   missionGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 },
   bodyText: { fontSize: 14, color: '#4a6080', lineHeight: '1.9', margin: 0 },
-  pillarsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 20 },
+  pillarsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 20 },
   pillar: {
     padding: '28px 22px', background: 'rgba(6,10,28,0.7)',
     borderRadius: 14, backdropFilter: 'blur(12px)',
@@ -136,6 +136,7 @@ export default function AboutUsModal({ onClose }) {
     { color: '#7c4dff', num: '02', title: 'AI Neural Coach',          desc: 'Describe your mental state in plain language. The AI interprets your input, updates your live brain map instantly, and delivers science-backed, personalised recommendations.' },
     { color: '#00e676', num: '03', title: 'Male-Specific Science',    desc: 'Every metric is grounded in male neuroscience — testosterone-driven motivation circuits, stress-response patterns, and focus architectures specific to the male brain.' },
     { color: '#ff3366', num: '04', title: 'Anatomical Brain Scan',    desc: 'Switch to a clinical brain-scan perspective for region coherence scores, functional states, and a deeper anatomical understanding of what drives your daily performance.' },
+    { color: '#ffaa00', num: '05', title: 'Bhagavad Gita Wisdom',     desc: "For every metric flagged as 'needs work', the platform pairs your score with a Bhagavad Gita verse — Sanskrit, English meaning, the neuroscience impact, and the practice the Gita prescribes. Translate any verse into 16 languages on the fly." },
   ]
 
   const stack = ['React · Three.js · R3F', 'Spring Boot · Java', 'OpenAI API', 'WebGL · Canvas 2D']
@@ -165,7 +166,8 @@ export default function AboutUsModal({ onClose }) {
           <div style={m.heroLine} />
           <p style={m.heroDesc}>
             A next-generation neuroscience platform that turns your lifestyle data into a living,
-            breathing 3D map of your mind — built exclusively around the male brain.
+            breathing 3D map of your mind — built exclusively around the male brain, and paired with
+            <span style={{ color: '#ffaa00' }}> Bhagavad Gita guidance</span> tuned to your weakest metrics.
           </p>
         </section>
 
@@ -203,6 +205,31 @@ export default function AboutUsModal({ onClose }) {
                   <div style={m.pillarDesc}>{p.desc}</div>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── GITA + SCIENCE ── */}
+        <section style={{ ...m.section, background: 'linear-gradient(180deg, rgba(255,170,0,0.04) 0%, rgba(255,112,67,0.02) 100%)', borderTop: '1px solid rgba(255,170,0,0.12)', borderBottom: '1px solid rgba(255,170,0,0.12)' }}>
+          <div style={m.sectionInner}>
+            <div style={{ ...m.label, color: '#ffaa00' }}>Ancient Wisdom × Modern Science</div>
+            <h2 style={m.heading}>Why the Bhagavad Gita</h2>
+            <div style={m.missionGrid}>
+              <p style={m.bodyText}>
+                The neural coach diagnoses <em style={{ color: '#00ccff' }}>what</em> is out of balance.
+                The Gita layer answers <em style={{ color: '#ffaa00' }}>what to do about it</em>.
+                The Bhagavad Gita is one of the oldest systematic texts on the male inner battlefield — Arjuna's
+                anxiety, paralysis, anger, doubt, and search for steadiness map almost cleanly onto modern
+                constructs of low mindfulness, elevated stress, weak focus, and emotional dysregulation.
+              </p>
+              <p style={m.bodyText}>
+                For every metric flagged as <span style={{ color: '#ff3366' }}>needs work</span>, the platform
+                cross-references the Gita's situation taxonomy — anger, fear, depression, uncontrolled mind,
+                demotivation, losing hope, seeking peace — and surfaces the verse that has guided practitioners
+                for two and a half millennia. Modern neuroscience names the problem; the Gita prescribes the
+                discipline. Translate any verse into <span style={{ color: '#ffaa00' }}>16 languages</span> while
+                the Sanskrit shloka stays in Devanagari.
+              </p>
             </div>
           </div>
         </section>

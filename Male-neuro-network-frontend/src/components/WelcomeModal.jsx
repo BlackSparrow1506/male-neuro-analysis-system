@@ -337,8 +337,8 @@ function HeroSection({ onClose }) {
           Understand Your Brain.&nbsp;&nbsp;Optimize Your Life.
         </p>
 
-        <div className={v(visible, 'd4')} style={{ display: 'flex', justifyContent: 'center', gap: 50, marginBottom: 20 }}>
-          {[['3D', 'Neural Map'], ['AI', 'Coach'], ['Real‑Time', 'Analysis']].map(([top, bot]) => (
+        <div className={v(visible, 'd4')} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 50, marginBottom: 20 }}>
+          {[['3D', 'Neural Map'], ['AI', 'Coach'], ['Real‑Time', 'Analysis'], ['Gita', 'Wisdom']].map(([top, bot]) => (
             <div key={top} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 22, fontWeight: 'bold', color: '#00ccff', letterSpacing: '2px' }}>{top}</div>
               <div style={{ fontSize: 10, color: '#3a4a6a', letterSpacing: '2px', textTransform: 'uppercase', marginTop: 4 }}>{bot}</div>
@@ -450,6 +450,11 @@ function HowSection() {
       title: 'Chat With Neural AI',
       desc: 'Describe your mental state. The AI analyzes your input, updates your brain map live, and gives specific actionable advice.',
     },
+    {
+      num: '04', color: '#ffaa00',
+      title: 'Receive Gita Wisdom',
+      desc: 'For every metric flagged "needs work", get a Bhagavad Gita verse — Sanskrit, English meaning, the neuroscience impact, and the practice prescribed by the Gita. Translate any verse into 16 languages on the fly.',
+    },
   ]
 
   return (
@@ -514,6 +519,7 @@ function LearnSection() {
     { label: 'Your Strengths',             desc: "What you're doing right that boosts brain function",        color: '#00e676' },
     { label: 'Your Weaknesses',            desc: "What's holding you back, with science-backed explanations", color: '#ff3366' },
     { label: 'Personalised Action Plan',   desc: 'Specific steps to balance your neural network today',       color: '#7c4dff' },
+    { label: 'Bhagavad Gita Guidance',     desc: 'Each weak metric paired with a verse, its meaning, and the practice the Gita prescribes', color: '#ffaa00' },
     { label: 'Male Brain Specifics',       desc: 'How each region works and what affects it in men',          color: '#64ffda' },
   ]
 

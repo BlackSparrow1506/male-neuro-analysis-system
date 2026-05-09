@@ -27,6 +27,13 @@ Every metric is rooted in male neuroscience — testosterone-driven motivation c
 | 02 | **AI Neural Coach** | Describe your mental state in plain language. The AI interprets your input, updates your brain map instantly, and delivers science-backed personalised recommendations. |
 | 03 | **Anatomical Brain Scan** | Switch to a clinical perspective for region coherence scores, functional states, and a deeper anatomical understanding of what drives your daily performance. |
 | 04 | **Neural Metrics Panel** | Tracks Sleep Quality, Stress Level, Focus Index, Emotional Balance, Creativity, Analytical Thinking, Social Engagement, Physical Activity, Mindfulness, and Cognitive Load — each rendered as a live percentage bar with a neural coherence score. |
+| 05 | **Bhagavad Gita Wisdom** | For every metric flagged as "needs work", the platform pairs the actual score with a relevant verse from the Bhagavad Gita — Sanskrit (Devanagari), IAST transliteration, English meaning, the neuroscience impact of the imbalance, and the Gita's prescribed practice. The verse-meaning passage can be translated into 16 languages on the fly while the Sanskrit shloka stays untouched. |
+
+---
+
+## Why the Bhagavad Gita
+
+The neural coach diagnoses *what* is out of balance; the Gita layer answers *what to do about it*. The Gita is one of the oldest systematic texts on the male inner battlefield — Arjuna's anxiety, paralysis, anger, doubt, and search for steadiness map almost cleanly onto modern constructs of low mindfulness, elevated stress, weak focus, and emotional dysregulation. By cross-referencing each weak metric against the situation taxonomy in the Gita (anger, fear, depression, uncontrolled mind, demotivation, losing hope, seeking peace…), the platform pairs measurable neural imbalances with prescriptive verses that have guided practitioners for two and a half millennia. Modern neuroscience names the problem; the Gita prescribes the discipline.
 
 ---
 
@@ -88,12 +95,13 @@ This platform is an educational and self-reflection tool, not a medical device. 
 - 3D interactive neural network visualisation with hover tooltips and orbit controls
 - 3D anatomical brain scan view with region labels
 - Real-time AI neural coach chat (voice input + ElevenLabs TTS output)
+- Bhagavad Gita Wisdom tab — verse-by-verse guidance keyed to your weakest neural metrics, with on-the-fly translation into 16 languages
 - Neural profile creation and management (multiple profiles per account)
 - Metrics panel with 10 neural metrics and overall coherence score
 - Email verification on registration
 - JWT-based stateless authentication
 - Account settings — change password, delete account (cascading data removal)
-- Mobile-responsive with tabbed navigation (3D View / Metrics / Chat)
+- Mobile-responsive with tabbed navigation (3D View / Metrics / Gita / Chat)
 
 ---
 
@@ -159,6 +167,12 @@ male-neuro-analysis-system/
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST   | `/api/tts` | Synthesise speech via ElevenLabs |
+
+### Gita Wisdom (Protected)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET    | `/api/gita/{profileId}/guidance` | Generate Bhagavad Gita guidance cards from the profile's weak metrics |
+| POST   | `/api/gita/translate` | Translate the meaning/impact prose of a card into a target language (Sanskrit shloka stays in Devanagari) |
 
 ---
 
