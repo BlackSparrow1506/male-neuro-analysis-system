@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
 import { changePassword, deleteAccount, logout, resendVerification } from '../api'
+import ActivityLog from './ActivityLog'
 
 export default function ProfilePage({ username, email, emailVerified = true, onEmailVerifiedChange, onBack, onLogout }) {
+  const [activeTab, setActiveTab] = useState('account')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword]         = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -76,11 +78,20 @@ export default function ProfilePage({ username, email, emailVerified = true, onE
           <div style={styles.logoSub}>Neural Platform</div>
         </div>
         <nav style={styles.nav}>
-          <div style={styles.navItem}>
+          <div style={styles.navItem} onClick={onBack}>
             <span style={styles.navIcon}>◈</span> Dashboard
           </div>
-          <div style={{...styles.navItem, ...styles.navItemActive}}>
+          <div
+            style={{...styles.navItem, ...(activeTab === 'account' ? styles.navItemActive : {})}}
+            onClick={() => setActiveTab('account')}
+          >
             <span style={styles.navIcon}>⊙</span> Account
+          </div>
+          <div
+            style={{...styles.navItem, ...(activeTab === 'activity' ? styles.navItemActive : {})}}
+            onClick={() => setActiveTab('activity')}
+          >
+            <span style={styles.navIcon}>◇</span> Activity Log
           </div>
         </nav>
         <button onClick={onBack} style={styles.backBtn}>
@@ -93,14 +104,24 @@ export default function ProfilePage({ username, email, emailVerified = true, onE
         {/* Top bar */}
         <div style={styles.topbar}>
           <div>
-            <div style={styles.pageTitle}>Account Settings</div>
-            <div style={styles.pageSub}>Manage your profile, security, and preferences</div>
+            <div style={styles.pageTitle}>
+              {activeTab === 'activity' ? 'Activity Log' : 'Account Settings'}
+            </div>
+            <div style={styles.pageSub}>
+              {activeTab === 'activity'
+                ? 'Audit trail of every AI action recorded on your account'
+                : 'Manage your profile, security, and preferences'}
+            </div>
           </div>
         </div>
 
         {/* Scrollable body */}
         <div style={styles.body}>
 
+          {activeTab === 'activity' ? (
+            <ActivityLog />
+          ) : (
+          <>
           {/* Avatar + identity */}
           <div style={styles.identityCard}>
             <div style={styles.avatar}>{avatarLetter}</div>
@@ -270,6 +291,8 @@ export default function ProfilePage({ username, email, emailVerified = true, onE
             </div>
           </div>
 
+          </>
+          )}
         </div>
       </div>
     </div>

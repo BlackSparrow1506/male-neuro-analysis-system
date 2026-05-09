@@ -1,5 +1,6 @@
 package com.maleneuro.service;
 
+import com.maleneuro.model.AuditLog;
 import com.maleneuro.model.ChatMessage;
 import com.maleneuro.model.ChatRole;
 import com.maleneuro.model.NeuralConnection;
@@ -19,13 +20,16 @@ public class NeuralAnalysisService {
     private final NeuralProfileRepository profileRepo;
     private final ChatMessageRepository chatRepo;
     private final GeminiService geminiService;
+    private final AuditLogService auditLogService;
 
     public NeuralAnalysisService(NeuralProfileRepository profileRepo,
                                   ChatMessageRepository chatRepo,
-                                  GeminiService geminiService) {
+                                  GeminiService geminiService,
+                                  AuditLogService auditLogService) {
         this.profileRepo = profileRepo;
         this.chatRepo = chatRepo;
         this.geminiService = geminiService;
+        this.auditLogService = auditLogService;
     }
 
     // --- Profile CRUD ---
@@ -116,9 +120,31 @@ public class NeuralAnalysisService {
         profile.setUpdatedAt(Instant.now());
         profileRepo.save(profile);
 
-        String response = geminiService.generateResponse(profile, priorHistory, userMessage);
-        ChatMessage aiMessage = new ChatMessage(profileId, ChatRole.ASSISTANT.wire(), response);
-        return chatRepo.save(aiMessage);
+        long started = System.currentTimeMillis();
+        String response = null;
+        boolean success = false;
+        String errorMessage = null;
+        try {
+            response = geminiService.generateResponse(profile, priorHistory, userMessage);
+            success = true;
+            ChatMessage aiMessage = new ChatMessage(profileId, ChatRole.ASSISTANT.wire(), response);
+            return chatRepo.save(aiMessage);
+        } catch (RuntimeException ex) {
+            errorMessage = ex.getMessage();
+            throw ex;
+        } finally {
+            AuditLog entry = new AuditLog();
+            entry.setUserId(profile.getUserId());
+            entry.setProfileId(profileId);
+            entry.setAction("chat.message");
+            entry.setRequestPreview(userMessage);
+            entry.setResponsePreview(response);
+            entry.setLatencyMs(System.currentTimeMillis() - started);
+            entry.setSuccess(success);
+            entry.setErrorMessage(errorMessage);
+            entry.setModel("groq");
+            auditLogService.record(entry);
+        }
     }
 
     public List<ChatMessage> getChatHistory(String profileId) {

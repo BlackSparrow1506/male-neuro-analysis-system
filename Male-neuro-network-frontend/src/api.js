@@ -193,6 +193,12 @@ export async function translateGitaText(text, language) {
   return handleResponse(res);
 }
 
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+export async function fetchMyAuditLog(limit = 50) {
+  const res = await fetch(`${BASE}${API_PATHS.AUDIT.ME}?limit=${limit}`, { headers: authHeaders() });
+  return handleResponse(res);
+}
+
 // ─── TTS ──────────────────────────────────────────────────────────────────────
 export async function synthesizeSpeech(text) {
   const res = await fetch(`${BASE}${API_PATHS.TTS}`, {
