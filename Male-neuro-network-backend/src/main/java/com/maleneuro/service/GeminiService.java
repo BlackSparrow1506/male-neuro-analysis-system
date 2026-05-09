@@ -4,6 +4,8 @@ import com.maleneuro.config.ExternalApis;
 import com.maleneuro.model.ChatMessage;
 import com.maleneuro.model.ChatRole;
 import com.maleneuro.model.NeuralProfile;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +22,7 @@ import java.util.Map;
 @Service
 public class GeminiService {
 
+    public static final String CB_NAME = "groq";
     private static final Logger log = LoggerFactory.getLogger(GeminiService.class);
 
     private final RestTemplate restTemplate;
@@ -37,43 +40,45 @@ public class GeminiService {
         this.restTemplate = restTemplate;
     }
 
+    @Retry(name = CB_NAME)
+    @CircuitBreaker(name = CB_NAME, fallbackMethod = "fallbackResponse")
     public String generateResponse(NeuralProfile profile, List<ChatMessage> priorHistory, String currentMessage) {
-        try {
-            List<Map<String, Object>> messages = buildMessages(profile, priorHistory, currentMessage);
+        List<Map<String, Object>> messages = buildMessages(profile, priorHistory, currentMessage);
 
-            Map<String, Object> requestBody = Map.of(
+        Map<String, Object> requestBody = Map.of(
                 "model", model,
                 "messages", messages,
                 "temperature", 0.7,
                 "max_tokens", 800
-            );
+        );
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(apiKey);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
 
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
-            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 ExternalApis.Groq.CHAT_COMPLETIONS_URL,
                 HttpMethod.POST,
                 request,
                 new ParameterizedTypeReference<Map<String, Object>>() {}
-            );
+        );
 
-            return extractText(response.getBody());
+        return extractText(response.getBody());
+    }
 
-        } catch (HttpClientErrorException e) {
-            if (e.getStatusCode().value() == 429) {
-                log.error("Groq API quota exceeded for profile {}. Check https://console.groq.com", profile.getId());
-            } else {
-                log.error("Groq API HTTP error for profile {}: {} {}", profile.getId(), e.getStatusCode(), e.getMessage());
-            }
-            return buildFallbackResponse(profile, e.getStatusCode().value() == 429);
-        } catch (Exception e) {
-            log.error("Groq API call failed for profile {}: {}", profile.getId(), e.getMessage(), e);
-            return buildFallbackResponse(profile, false);
+    @SuppressWarnings("unused")
+    private String fallbackResponse(NeuralProfile profile, List<ChatMessage> priorHistory, String currentMessage, Throwable t) {
+        boolean quotaExceeded = (t instanceof HttpClientErrorException hce
+                && hce.getStatusCode().value() == 429);
+        if (quotaExceeded) {
+            log.error("Groq quota exceeded for profile {}; serving degraded fallback", profile.getId());
+        } else {
+            log.error("Groq call failed for profile {} ({}); serving degraded fallback",
+                    profile.getId(), t.getClass().getSimpleName());
         }
+        return buildFallbackResponse(profile, quotaExceeded);
     }
 
     // ---- Request construction ----
