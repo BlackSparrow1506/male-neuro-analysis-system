@@ -50,7 +50,9 @@ public class GitaService {
     public Map<String, Object> generateGuidance(NeuralProfile profile) {
         try {
             String prompt = buildGuidancePrompt(profile);
-            String content = callGroq(prompt, 0.6, 1500);
+            // Each card carries Sanskrit + IAST + 3 prose blocks; with multiple weaknesses
+            // and an overall reading we need plenty of room or the response gets truncated mid-card.
+            String content = callGroq(prompt, 0.6, 4000);
 
             // The model occasionally puts IAST in the SHLOKA_SANSKRIT field.
             // Detect that and retry once with a stricter, lower-temperature instruction.
@@ -64,7 +66,7 @@ public class GitaService {
                     SHLOKA_SANSKRIT: कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।
                     मा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि॥
                     """;
-                content = callGroq(stricter, 0.3, 1500);
+                content = callGroq(stricter, 0.3, 4000);
             }
 
             return Map.of(

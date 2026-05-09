@@ -24,25 +24,26 @@ const DEVANAGARI_RE = /[ऀ-ॿ]/
 
 // Parse the structured guidance text from the backend into card objects.
 // The model is asked to emit blocks of LABEL: value lines separated by `---`.
+// Be lenient: the model sometimes drops the final separator before OVERALL_READING
+// or uses extra whitespace around `---`.
 function parseGuidance(raw) {
   if (!raw || typeof raw !== 'string') return { cards: [], overall: '' }
-  const blocks = raw.split(/\n---\n?/).map(b => b.trim()).filter(Boolean)
+
+  const blocks = raw
+    .split(/\r?\n\s*-{3,}\s*\r?\n/)
+    .map(b => b.trim())
+    .filter(Boolean)
+
   const cards = []
   let overall = ''
+  const KEY_RE = /^(METRIC|TITLE|SCORE_LINE|SITUATION|REFERENCE|SHLOKA_SANSKRIT|SHLOKA_TRANSLITERATION|MEANING_ENGLISH|IMPACT|GITA_ADVICE):\s*(.*)$/
 
-  for (const block of blocks) {
-    if (block.includes('OVERALL_READING:')) {
-      overall = block.replace(/^.*OVERALL_READING:\s*/s, '').trim()
-      continue
-    }
+  const parseCardBlock = (text) => {
     const card = {}
-    const lines = block.split('\n')
+    const lines = text.split('\n')
     let currentKey = null
     let currentVal = []
-    const flush = () => {
-      if (currentKey) card[currentKey] = currentVal.join('\n').trim()
-    }
-    const KEY_RE = /^(METRIC|TITLE|SCORE_LINE|SITUATION|REFERENCE|SHLOKA_SANSKRIT|SHLOKA_TRANSLITERATION|MEANING_ENGLISH|IMPACT|GITA_ADVICE):\s*(.*)$/
+    const flush = () => { if (currentKey) card[currentKey] = currentVal.join('\n').trim() }
     for (const line of lines) {
       const m = line.match(KEY_RE)
       if (m) {
@@ -54,6 +55,21 @@ function parseGuidance(raw) {
       }
     }
     flush()
+    return card
+  }
+
+  for (const block of blocks) {
+    // Pull OVERALL_READING out of whichever block contains it, leaving any
+    // preceding card content intact so it still gets parsed.
+    let cardText = block
+    const idx = block.indexOf('OVERALL_READING:')
+    if (idx !== -1) {
+      cardText = block.slice(0, idx).trim()
+      overall = block.slice(idx + 'OVERALL_READING:'.length).trim()
+    }
+    if (!cardText) continue
+
+    const card = parseCardBlock(cardText)
     if (card.METRIC || card.TITLE || card.SHLOKA_SANSKRIT) cards.push(card)
   }
   return { cards, overall }
