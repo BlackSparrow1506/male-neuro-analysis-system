@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { fetchMyAuditLog } from '../api'
+import SystemStatus from './SystemStatus'
 
 const ACTION_LABELS = {
   'chat.message':   'AI Chat',
@@ -47,6 +48,8 @@ export default function ActivityLog() {
   }, [])
 
   return (
+    <>
+    <SystemStatus />
     <div style={styles.card}>
       <div style={styles.cardHeader}>
         <span style={styles.cardIcon}>◇</span>
@@ -128,6 +131,7 @@ export default function ActivityLog() {
         </div>
       )}
     </div>
+    </>
   )
 }
 
