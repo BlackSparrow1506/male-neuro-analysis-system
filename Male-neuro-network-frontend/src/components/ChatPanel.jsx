@@ -78,8 +78,11 @@ export default function ChatPanel({ profileId, onClearChat }) {
       if (ttsEnabledRef.current && reply.content) {
         speakText(reply.content)
       }
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Error: Could not reach backend.', timestamp: new Date().toISOString() }])
+    } catch (err) {
+      const content = err?.code === 'RATE_LIMITED'
+        ? `Slow down — ${err.message}`
+        : (err?.message || 'Error: Could not reach backend.')
+      setMessages(prev => [...prev, { role: 'assistant', content, timestamp: new Date().toISOString() }])
     }
     setLoading(false)
   }
