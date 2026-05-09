@@ -27,7 +27,12 @@ async function handleResponse(res) {
   }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || `Request failed: ${res.status}`);
+    const err = new Error(body.message || `Request failed: ${res.status}`);
+    if (res.status === 429) {
+      err.code = 'RATE_LIMITED';
+      err.retryAfterSeconds = body.retryAfterSeconds || Number(res.headers.get('Retry-After')) || null;
+    }
+    throw err;
   }
   if (res.status === 204) return null;
   return res.json();
