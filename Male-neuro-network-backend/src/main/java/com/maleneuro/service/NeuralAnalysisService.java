@@ -22,17 +22,20 @@ public class NeuralAnalysisService {
     private final GeminiService geminiService;
     private final AuditLogService auditLogService;
     private final GuardrailService guardrailService;
+    private final EvalService evalService;
 
     public NeuralAnalysisService(NeuralProfileRepository profileRepo,
                                   ChatMessageRepository chatRepo,
                                   GeminiService geminiService,
                                   AuditLogService auditLogService,
-                                  GuardrailService guardrailService) {
+                                  GuardrailService guardrailService,
+                                  EvalService evalService) {
         this.profileRepo = profileRepo;
         this.chatRepo = chatRepo;
         this.geminiService = geminiService;
         this.auditLogService = auditLogService;
         this.guardrailService = guardrailService;
+        this.evalService = evalService;
     }
 
     // --- Profile CRUD ---
@@ -154,6 +157,11 @@ public class NeuralAnalysisService {
                 entry.setErrorMessage("PII redacted from response: " + String.join(", ", redactedKinds));
             }
             entry.setModel("groq");
+            if (success && response != null) {
+                EvalService.Result eval = evalService.evaluate(userMessage, response);
+                entry.setEvalScore(eval.score());
+                entry.setEvalNotes(eval.notes());
+            }
             auditLogService.record(entry);
         }
     }

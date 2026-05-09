@@ -22,6 +22,20 @@ function formatTimestamp(ts) {
   }
 }
 
+function qualityPillStyle(score) {
+  const color = score >= 80 ? '#00e676' : score >= 60 ? '#ff9800' : '#ff3366'
+  return {
+    display: 'inline-block',
+    padding: '2px 8px',
+    borderRadius: 10,
+    fontSize: 10,
+    fontWeight: 'bold',
+    color,
+    border: `1px solid ${color}`,
+    background: `${color}11`,
+  }
+}
+
 export default function ActivityLog() {
   const [logs, setLogs]       = useState([])
   const [loading, setLoading] = useState(true)
@@ -76,6 +90,7 @@ export default function ActivityLog() {
             <div style={{...styles.col, ...styles.colAction}}>Action</div>
             <div style={{...styles.col, ...styles.colModel}}>Model</div>
             <div style={{...styles.col, ...styles.colLatency}}>Latency</div>
+            <div style={{...styles.col, ...styles.colQuality}}>Quality</div>
             <div style={{...styles.col, ...styles.colStatus}}>Status</div>
           </div>
           {logs.map(log => {
@@ -91,6 +106,11 @@ export default function ActivityLog() {
                   <div style={{...styles.col, ...styles.colAction}}>{ACTION_LABELS[log.action] || log.action}</div>
                   <div style={{...styles.col, ...styles.colModel}}>{log.model || '—'}</div>
                   <div style={{...styles.col, ...styles.colLatency}}>{formatLatency(log.latencyMs)}</div>
+                  <div style={{...styles.col, ...styles.colQuality}}>
+                    {log.evalScore != null ? (
+                      <span style={qualityPillStyle(log.evalScore)}>{log.evalScore}</span>
+                    ) : '—'}
+                  </div>
                   <div style={{...styles.col, ...styles.colStatus}}>
                     <span style={log.success ? styles.statusOk : styles.statusFail}>
                       {log.success ? 'OK' : 'FAIL'}
@@ -115,6 +135,19 @@ export default function ActivityLog() {
                       <div style={styles.detailRow}>
                         <div style={styles.detailLabel}>Error</div>
                         <div style={{...styles.detailText, color: '#ff3366'}}>{log.errorMessage}</div>
+                      </div>
+                    )}
+                    {log.evalScore != null && (
+                      <div style={styles.detailRow}>
+                        <div style={styles.detailLabel}>Quality</div>
+                        <div style={styles.detailText}>
+                          {log.evalScore}/100
+                          {log.evalNotes && log.evalNotes.length > 0 && (
+                            <span style={{color: '#ff9800', marginLeft: 8}}>
+                              · {log.evalNotes.join(', ')}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
                     {log.profileId && (
@@ -217,6 +250,7 @@ const styles = {
   colAction:  { flex: '0 0 130px' },
   colModel:   { flex: '0 0 110px' },
   colLatency: { flex: '0 0 90px' },
+  colQuality: { flex: '0 0 70px' },
   colStatus:  { flex: '1 1 auto', textAlign: 'right' },
   statusOk: {
     padding: '2px 8px',
