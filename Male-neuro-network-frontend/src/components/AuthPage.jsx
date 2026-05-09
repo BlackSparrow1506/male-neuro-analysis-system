@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { login, register, resendVerification } from '../api'
+import { GoogleLogin } from '@react-oauth/google'
+import { login, register, resendVerification, googleSignIn } from '../api'
 
 // ─── Reuse the same interstellar canvas ───────────────────────────────────────
 function hexToRgb(hex) {
@@ -121,37 +122,6 @@ function PasswordStrength({ password }) {
         {PW_LABELS[s]}
       </div>
     </div>
-  )
-}
-
-// ─── OAuth provider button (stubbed for Phase 2) ──────────────────────────────
-function OAuthButton({ provider, label, icon }) {
-  const [hover, setHover] = useState(false)
-  return (
-    <button
-      type="button"
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onClick={() => alert(`${provider} sign-in is coming soon.`)}
-      title={`${provider} sign-in is coming soon`}
-      style={{
-        flex: 1,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        padding: '12px 14px',
-        background: hover ? 'rgba(0,204,255,0.08)' : 'rgba(4,8,22,0.85)',
-        border: `1px solid ${hover ? 'rgba(0,204,255,0.45)' : 'rgba(0,204,255,0.18)'}`,
-        borderRadius: 10,
-        color: '#a8b2d1',
-        fontSize: 12, fontWeight: 'bold',
-        letterSpacing: '1px', textTransform: 'uppercase',
-        fontFamily: 'inherit',
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-      }}
-    >
-      <span style={{ fontSize: 16, lineHeight: 1 }}>{icon}</span>
-      <span>{label}</span>
-    </button>
   )
 }
 
@@ -372,6 +342,23 @@ export default function AuthPage({ onAuth }) {
     return errs
   }
 
+  async function handleGoogleSuccess(credentialResponse) {
+    setError('')
+    if (!credentialResponse?.credential) {
+      setError('Google sign-in failed. Please try again.')
+      return
+    }
+    setLoading(true)
+    try {
+      const data = await googleSignIn(credentialResponse.credential)
+      onAuth(data)
+    } catch (err) {
+      setError(err.message || 'Google sign-in failed.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
@@ -485,10 +472,16 @@ export default function AuthPage({ onAuth }) {
               ))}
             </div>
 
-            {/* OAuth row (Phase 2 stub) */}
-            <div style={{display:'flex',gap:10,marginBottom:18}}>
-              <OAuthButton provider="Google" label="Google" icon="G" />
-              <OAuthButton provider="Apple"  label="Apple"  icon="" />
+            {/* Google sign-in */}
+            <div style={{display:'flex',justifyContent:'center',marginBottom:18}}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError('Google sign-in failed. Please try again.')}
+                theme="filled_black"
+                shape="pill"
+                text={mode === 'login' ? 'signin_with' : 'signup_with'}
+                useOneTap={false}
+              />
             </div>
 
             {/* Divider */}

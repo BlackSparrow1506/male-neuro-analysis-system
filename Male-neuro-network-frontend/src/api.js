@@ -59,6 +59,19 @@ export async function login(usernameOrEmail, password) {
   return data;
 }
 
+// Sign in (or auto-register) with a Google ID token. Returns the same shape
+// as login() and stores the JWT.
+export async function googleSignIn(idToken) {
+  const res = await fetch(`${BASE}/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken }),
+  });
+  const data = await handleResponse(res);
+  setToken(data.token);
+  return data;
+}
+
 export async function resendVerification(email) {
   const res = await fetch(`${BASE}/auth/resend-verification`, {
     method: 'POST',

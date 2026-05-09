@@ -8,7 +8,9 @@ import com.maleneuro.model.User;
 import com.maleneuro.repository.ChatMessageRepository;
 import com.maleneuro.repository.NeuralProfileRepository;
 import com.maleneuro.repository.UserRepository;
+import com.maleneuro.service.GoogleAuthService;
 import com.maleneuro.service.MailService;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +44,7 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final MailService mailService;
+    private final GoogleAuthService googleAuthService;
     private final String frontendUrl;
 
     public AuthController(UserRepository userRepo,
@@ -50,6 +53,7 @@ public class AuthController {
                           PasswordEncoder passwordEncoder,
                           JwtUtil jwtUtil,
                           MailService mailService,
+                          GoogleAuthService googleAuthService,
                           @Value("${app.frontend-url:http://localhost:5173}") String frontendUrl) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
@@ -57,6 +61,7 @@ public class AuthController {
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.mailService = mailService;
+        this.googleAuthService = googleAuthService;
         this.frontendUrl = frontendUrl;
     }
 
@@ -137,6 +142,52 @@ public class AuthController {
                 })
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("message", "Invalid username or password")));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> google(@RequestBody Map<String, String> req) {
+        String idToken = req.get("idToken");
+        GoogleIdToken.Payload payload = googleAuthService.verify(idToken);
+
+        String email = payload.getEmail().toLowerCase();
+        String name  = (String) payload.get("name");
+
+        User user = userRepo.findByEmail(email).orElseGet(() -> {
+            User u = new User();
+            u.setEmail(email);
+            u.setUsername(generateUsernameFromEmail(email, name));
+            u.setEmailVerified(true);
+            u.setAuthProvider("GOOGLE");
+            return userRepo.save(u);
+        });
+
+        if (!user.isEmailVerified()) {
+            user.setEmailVerified(true);
+            userRepo.save(user);
+        }
+
+        String token = jwtUtil.generateToken(user.getId());
+        return ResponseEntity.ok(new AuthResponse(
+                token, user.getId(), user.getUsername(), user.getEmail(), true));
+    }
+
+    private String generateUsernameFromEmail(String email, String displayName) {
+        String base = email.substring(0, email.indexOf('@'))
+                .replaceAll("[^A-Za-z0-9_.-]", "")
+                .toLowerCase();
+        if (base.length() < 3) {
+            base = "user" + base;
+        }
+        if (base.length() > 25) {
+            base = base.substring(0, 25);
+        }
+        String candidate = base;
+        int suffix = 0;
+        while (userRepo.existsByUsername(candidate)) {
+            suffix++;
+            candidate = base + suffix;
+        }
+        return candidate;
     }
 
     @GetMapping("/verify")
