@@ -2,7 +2,7 @@ package com.maleneuro.controller;
 
 import com.maleneuro.model.NeuralProfile;
 import com.maleneuro.service.GitaService;
-import com.maleneuro.service.NeuralAnalysisService;
+import com.maleneuro.service.ProfileService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,18 +16,18 @@ import java.util.Map;
 public class GitaController {
 
     private final GitaService gitaService;
-    private final NeuralAnalysisService analysisService;
+    private final ProfileService profileService;
 
-    public GitaController(GitaService gitaService, NeuralAnalysisService analysisService) {
+    public GitaController(GitaService gitaService, ProfileService profileService) {
         this.gitaService = gitaService;
-        this.analysisService = analysisService;
+        this.profileService = profileService;
     }
 
     @GetMapping("/{profileId}/guidance")
     public ResponseEntity<Map<String, Object>> getGuidance(
             @AuthenticationPrincipal String userId,
             @PathVariable String profileId) {
-        NeuralProfile profile = analysisService.getProfile(profileId)
+        NeuralProfile profile = profileService.get(profileId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (!userId.equals(profile.getUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);

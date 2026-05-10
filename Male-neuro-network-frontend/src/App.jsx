@@ -12,20 +12,9 @@ import AuthPage from './components/AuthPage'
 import ProfileDashboard from './components/ProfileDashboard'
 import ProfilePage from './components/ProfilePage'
 import GovernancePanel from './components/GovernancePanel'
-import { fetchProfile, clearChatHistory, getToken, getMe } from './api'
+import { fetchProfile, clearChatHistory, getMe } from './api'
 import { STORAGE_KEYS, EVENTS } from './constants'
-
-// Decode JWT payload without a library to check expiry
-function isTokenAlive() {
-  const token = getToken()
-  if (!token) return false
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    return payload.exp * 1000 > Date.now()
-  } catch {
-    return false
-  }
-}
+import { isTokenAlive, persistAuthProfile, clearStoredAuth } from './auth'
 
 // app states: 'landing' | 'auth' | 'dashboard' | 'app'
 function initialView() {
@@ -86,12 +75,11 @@ export default function App() {
   // ── Session expiry (fired by api.js on 401) ───────────────────────────────
   useEffect(() => {
     const handler = () => {
-      localStorage.removeItem(STORAGE_KEYS.EMAIL)
-      localStorage.removeItem(STORAGE_KEYS.USERNAME)
-      localStorage.removeItem(STORAGE_KEYS.EMAIL_VERIFIED)
+      clearStoredAuth()
       setUserEmail('')
       setUsername('')
       setEmailVerified(false)
+      setIsAdmin(false)
       setSelectedId(null)
       setProfile(null)
       setView('auth')
@@ -102,10 +90,7 @@ export default function App() {
 
   // ── Auth handlers ────────────────────────────────────────────────────────────
   const handleAuth = useCallback((data) => {
-    localStorage.setItem(STORAGE_KEYS.EMAIL, data.email || '')
-    localStorage.setItem(STORAGE_KEYS.USERNAME, data.username || '')
-    localStorage.setItem(STORAGE_KEYS.EMAIL_VERIFIED, data.emailVerified ? 'true' : 'false')
-    localStorage.setItem(STORAGE_KEYS.ADMIN, data.admin ? 'true' : 'false')
+    persistAuthProfile(data)
     setUserEmail(data.email || '')
     setUsername(data.username || '')
     setEmailVerified(!!data.emailVerified)
@@ -114,10 +99,7 @@ export default function App() {
   }, [])
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEYS.EMAIL)
-    localStorage.removeItem(STORAGE_KEYS.USERNAME)
-    localStorage.removeItem(STORAGE_KEYS.EMAIL_VERIFIED)
-    localStorage.removeItem(STORAGE_KEYS.ADMIN)
+    clearStoredAuth()
     setUserEmail('')
     setUsername('')
     setEmailVerified(false)

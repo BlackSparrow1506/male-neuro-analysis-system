@@ -1,12 +1,12 @@
 package com.maleneuro.controller;
 
 import com.maleneuro.model.NeuralProfile;
-import com.maleneuro.service.NeuralAnalysisService;
+import com.maleneuro.service.ProfileService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -14,10 +14,10 @@ import java.util.List;
 @RequestMapping("/api/profiles")
 public class ProfileController {
 
-    private final NeuralAnalysisService analysisService;
+    private final ProfileService profileService;
 
-    public ProfileController(NeuralAnalysisService analysisService) {
-        this.analysisService = analysisService;
+    public ProfileController(ProfileService profileService) {
+        this.profileService = profileService;
     }
 
     @PostMapping
@@ -25,18 +25,18 @@ public class ProfileController {
                                                        @RequestBody NeuralProfile profile) {
         profile.setId(null);
         profile.setUserId(userId);
-        return ResponseEntity.ok(analysisService.createProfile(profile));
+        return ResponseEntity.ok(profileService.create(profile));
     }
 
     @GetMapping
     public ResponseEntity<List<NeuralProfile>> getAllProfiles(@AuthenticationPrincipal String userId) {
-        return ResponseEntity.ok(analysisService.getProfilesByUser(userId));
+        return ResponseEntity.ok(profileService.getByUser(userId));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<NeuralProfile> getProfile(@AuthenticationPrincipal String userId,
                                                     @PathVariable String id) {
-        return analysisService.getProfile(id)
+        return profileService.get(id)
                 .filter(p -> userId.equals(p.getUserId()))
                 .map(ResponseEntity::ok)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -46,23 +46,23 @@ public class ProfileController {
     public ResponseEntity<NeuralProfile> updateProfile(@AuthenticationPrincipal String userId,
                                                        @PathVariable String id,
                                                        @RequestBody NeuralProfile profile) {
-        NeuralProfile existing = analysisService.getProfile(id)
+        NeuralProfile existing = profileService.get(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (!userId.equals(existing.getUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
-        return ResponseEntity.ok(analysisService.updateProfile(id, profile));
+        return ResponseEntity.ok(profileService.update(id, profile));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProfile(@AuthenticationPrincipal String userId,
                                               @PathVariable String id) {
-        NeuralProfile existing = analysisService.getProfile(id)
+        NeuralProfile existing = profileService.get(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (!userId.equals(existing.getUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
-        analysisService.deleteProfile(id);
+        profileService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -5,8 +5,9 @@ import com.maleneuro.model.AuditLog;
 import com.maleneuro.model.ChatMessage;
 import com.maleneuro.model.NeuralProfile;
 import com.maleneuro.service.AuditLogService;
+import com.maleneuro.service.ChatAnalysisService;
 import com.maleneuro.service.GuardrailService;
-import com.maleneuro.service.NeuralAnalysisService;
+import com.maleneuro.service.ProfileService;
 import com.maleneuro.service.RateLimitService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -26,18 +27,21 @@ public class ChatController {
     private static final String ACTION = "chat";
     private static final Duration WINDOW = Duration.ofMinutes(1);
 
-    private final NeuralAnalysisService analysisService;
+    private final ProfileService profileService;
+    private final ChatAnalysisService chatService;
     private final RateLimitService rateLimitService;
     private final AuditLogService auditLogService;
     private final GuardrailService guardrailService;
     private final long perMinute;
 
-    public ChatController(NeuralAnalysisService analysisService,
+    public ChatController(ProfileService profileService,
+                          ChatAnalysisService chatService,
                           RateLimitService rateLimitService,
                           AuditLogService auditLogService,
                           GuardrailService guardrailService,
                           @Value("${app.ratelimit.chat.per-minute:20}") long perMinute) {
-        this.analysisService = analysisService;
+        this.profileService = profileService;
+        this.chatService = chatService;
         this.rateLimitService = rateLimitService;
         this.auditLogService = auditLogService;
         this.guardrailService = guardrailService;
@@ -45,7 +49,7 @@ public class ChatController {
     }
 
     private void assertOwnership(String userId, String profileId) {
-        NeuralProfile profile = analysisService.getProfile(profileId)
+        NeuralProfile profile = profileService.get(profileId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (!userId.equals(profile.getUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -76,7 +80,7 @@ public class ChatController {
             return RateLimitResponses.tooManyRequests(decision);
         }
 
-        ChatMessage reply = analysisService.analyzeMessage(profileId, message);
+        ChatMessage reply = chatService.analyzeMessage(profileId, message);
         return ResponseEntity.ok().headers(RateLimitResponses.rateLimitHeaders(decision)).body(reply);
     }
 
@@ -85,7 +89,7 @@ public class ChatController {
             @AuthenticationPrincipal String userId,
             @PathVariable String profileId) {
         assertOwnership(userId, profileId);
-        return ResponseEntity.ok(analysisService.getChatHistory(profileId));
+        return ResponseEntity.ok(chatService.getChatHistory(profileId));
     }
 
     @DeleteMapping("/{profileId}/history")
@@ -93,7 +97,7 @@ public class ChatController {
             @AuthenticationPrincipal String userId,
             @PathVariable String profileId) {
         assertOwnership(userId, profileId);
-        analysisService.clearChatHistory(profileId);
+        profileService.clearChatHistory(profileId);
         return ResponseEntity.noContent().build();
     }
 
@@ -101,7 +105,7 @@ public class ChatController {
     public ResponseEntity<AgentRun> getAgentRun(
             @AuthenticationPrincipal String userId,
             @PathVariable String runId) {
-        AgentRun run = analysisService.getAgentRun(runId)
+        AgentRun run = chatService.getAgentRun(runId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (!userId.equals(run.getUserId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
