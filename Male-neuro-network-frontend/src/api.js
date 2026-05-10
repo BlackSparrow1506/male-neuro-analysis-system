@@ -213,6 +213,12 @@ export async function fetchMetrics(windowSeconds = 3600) {
   return handleResponse(res);
 }
 
+// ─── Agent orchestration trace ────────────────────────────────────────────────
+export async function fetchAgentRun(runId) {
+  const res = await fetch(`${BASE}${API_PATHS.CHAT.AGENT_RUN(runId)}`, { headers: authHeaders() });
+  return handleResponse(res);
+}
+
 // ─── TTS ──────────────────────────────────────────────────────────────────────
 export async function synthesizeSpeech(text) {
   const res = await fetch(`${BASE}${API_PATHS.TTS}`, {

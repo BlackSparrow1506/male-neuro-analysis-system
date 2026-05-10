@@ -13,6 +13,7 @@ public class ChatMessage {
     private String profileId;
     private String role;    // "user" or "assistant"
     private String content;
+    private String agentRunId;
     private Instant timestamp;
 
     public ChatMessage() {
@@ -37,6 +38,9 @@ public class ChatMessage {
 
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
+
+    public String getAgentRunId() { return agentRunId; }
+    public void setAgentRunId(String agentRunId) { this.agentRunId = agentRunId; }
 
     public Instant getTimestamp() { return timestamp; }
     public void setTimestamp(Instant timestamp) { this.timestamp = timestamp; }

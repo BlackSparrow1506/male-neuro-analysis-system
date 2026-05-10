@@ -1,5 +1,6 @@
 package com.maleneuro.controller;
 
+import com.maleneuro.model.AgentRun;
 import com.maleneuro.model.AuditLog;
 import com.maleneuro.model.ChatMessage;
 import com.maleneuro.model.NeuralProfile;
@@ -94,6 +95,18 @@ public class ChatController {
         assertOwnership(userId, profileId);
         analysisService.clearChatHistory(profileId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/agent-run/{runId}")
+    public ResponseEntity<AgentRun> getAgentRun(
+            @AuthenticationPrincipal String userId,
+            @PathVariable String runId) {
+        AgentRun run = analysisService.getAgentRun(runId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (!userId.equals(run.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        return ResponseEntity.ok(run);
     }
 
     private void recordRateLimitedAudit(String userId, String profileId, String message, RateLimitService.Decision d) {

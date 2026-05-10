@@ -37,6 +37,9 @@ export const API_PATHS = Object.freeze({
     ME: '/audit/me',
   },
   METRICS: '/metrics',
+  CHAT: {
+    AGENT_RUN: (id) => `/chat/agent-run/${id}`,
+  },
 });
 
 export const HTTP_HEADERS = Object.freeze({
