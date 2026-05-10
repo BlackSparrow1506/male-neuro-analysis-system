@@ -9,6 +9,7 @@ import com.maleneuro.model.User;
 import com.maleneuro.repository.ChatMessageRepository;
 import com.maleneuro.repository.NeuralProfileRepository;
 import com.maleneuro.repository.UserRepository;
+import com.maleneuro.service.AdminGuard;
 import com.maleneuro.service.AuditLogService;
 import com.maleneuro.service.GoogleAuthService;
 import com.maleneuro.service.MailService;
@@ -48,6 +49,7 @@ public class AuthController {
     private final MailService mailService;
     private final GoogleAuthService googleAuthService;
     private final AuditLogService auditLogService;
+    private final AdminGuard adminGuard;
     private final String frontendUrl;
 
     public AuthController(UserRepository userRepo,
@@ -58,6 +60,7 @@ public class AuthController {
                           MailService mailService,
                           GoogleAuthService googleAuthService,
                           AuditLogService auditLogService,
+                          AdminGuard adminGuard,
                           @Value("${app.frontend-url:http://localhost:5173}") String frontendUrl) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
@@ -67,6 +70,7 @@ public class AuthController {
         this.mailService = mailService;
         this.googleAuthService = googleAuthService;
         this.auditLogService = auditLogService;
+        this.adminGuard = adminGuard;
         this.frontendUrl = frontendUrl;
     }
 
@@ -100,6 +104,7 @@ public class AuthController {
         user.setEmailVerified(false);
         user.setVerificationToken(UUID.randomUUID().toString());
         user.setVerificationTokenExpiresAt(Instant.now().plus(24, ChronoUnit.HOURS));
+        adminGuard.syncAdminFlag(user);
         user = userRepo.save(user);
 
         try {
@@ -141,9 +146,10 @@ public class AuthController {
                                 "email", u.getEmail()
                         ));
                     }
+                    if (adminGuard.syncAdminFlag(u)) userRepo.save(u);
                     String token = jwtUtil.generateToken(u.getId());
                     return ResponseEntity.ok((Object) new AuthResponse(
-                            token, u.getId(), u.getUsername(), u.getEmail(), true));
+                            token, u.getId(), u.getUsername(), u.getEmail(), true, u.isAdmin()));
                 })
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("message", "Invalid username or password")));
@@ -183,9 +189,10 @@ public class AuthController {
             }
         }
 
+        if (adminGuard.syncAdminFlag(user)) user = userRepo.save(user);
         String token = jwtUtil.generateToken(user.getId());
         return ResponseEntity.ok(new AuthResponse(
-                token, user.getId(), user.getUsername(), user.getEmail(), true));
+                token, user.getId(), user.getUsername(), user.getEmail(), true, user.isAdmin()));
     }
 
     private String generateUsernameFromEmail(String email, String displayName) {
@@ -267,6 +274,7 @@ public class AuthController {
                         "username", u.getUsername(),
                         "email", u.getEmail(),
                         "emailVerified", u.isEmailVerified(),
+                        "admin", u.isAdmin(),
                         "createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : ""
                 )))
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "User not found")));

@@ -11,7 +11,8 @@ import WelcomeModal from './components/WelcomeModal'
 import AuthPage from './components/AuthPage'
 import ProfileDashboard from './components/ProfileDashboard'
 import ProfilePage from './components/ProfilePage'
-import { fetchProfile, clearChatHistory, getToken } from './api'
+import GovernancePanel from './components/GovernancePanel'
+import { fetchProfile, clearChatHistory, getToken, getMe } from './api'
 import { STORAGE_KEYS, EVENTS } from './constants'
 
 // Decode JWT payload without a library to check expiry
@@ -36,6 +37,7 @@ export default function App() {
   const [userEmail, setUserEmail]   = useState(() => localStorage.getItem(STORAGE_KEYS.EMAIL) || '')
   const [username, setUsername]     = useState(() => localStorage.getItem(STORAGE_KEYS.USERNAME) || '')
   const [emailVerified, setEmailVerified] = useState(() => localStorage.getItem(STORAGE_KEYS.EMAIL_VERIFIED) === 'true')
+  const [isAdmin, setIsAdmin]       = useState(() => localStorage.getItem(STORAGE_KEYS.ADMIN) === 'true')
   const [selectedId, setSelectedId] = useState(null)
   const [profile, setProfile]       = useState(null)
   const [selectedRegion, setSelectedRegion] = useState(null)
@@ -69,6 +71,18 @@ export default function App() {
     return () => clearInterval(interval)
   }, [view, selectedId])
 
+  // ── Refresh admin flag from server on boot (handles env config changes) ──
+  useEffect(() => {
+    if (!isTokenAlive()) return
+    getMe()
+      .then(me => {
+        const v = !!me.admin
+        setIsAdmin(v)
+        localStorage.setItem(STORAGE_KEYS.ADMIN, v ? 'true' : 'false')
+      })
+      .catch(() => { /* token might already be invalid; let the 401 handler take it */ })
+  }, [])
+
   // ── Session expiry (fired by api.js on 401) ───────────────────────────────
   useEffect(() => {
     const handler = () => {
@@ -91,9 +105,11 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.EMAIL, data.email || '')
     localStorage.setItem(STORAGE_KEYS.USERNAME, data.username || '')
     localStorage.setItem(STORAGE_KEYS.EMAIL_VERIFIED, data.emailVerified ? 'true' : 'false')
+    localStorage.setItem(STORAGE_KEYS.ADMIN, data.admin ? 'true' : 'false')
     setUserEmail(data.email || '')
     setUsername(data.username || '')
     setEmailVerified(!!data.emailVerified)
+    setIsAdmin(!!data.admin)
     setView('dashboard')
   }, [])
 
@@ -101,9 +117,11 @@ export default function App() {
     localStorage.removeItem(STORAGE_KEYS.EMAIL)
     localStorage.removeItem(STORAGE_KEYS.USERNAME)
     localStorage.removeItem(STORAGE_KEYS.EMAIL_VERIFIED)
+    localStorage.removeItem(STORAGE_KEYS.ADMIN)
     setUserEmail('')
     setUsername('')
     setEmailVerified(false)
+    setIsAdmin(false)
     setSelectedId(null)
     setProfile(null)
     setView('landing')
@@ -167,12 +185,23 @@ export default function App() {
         username={username}
         email={userEmail}
         emailVerified={emailVerified}
+        isAdmin={isAdmin}
+        onOpenGovernance={() => setView('governance')}
         onEmailVerifiedChange={(v) => {
           setEmailVerified(v)
           localStorage.setItem(STORAGE_KEYS.EMAIL_VERIFIED, v ? 'true' : 'false')
         }}
         onBack={() => setView('dashboard')}
         onLogout={handleLogout}
+      />
+    )
+  }
+
+  if (view === 'governance') {
+    return (
+      <GovernancePanel
+        username={username}
+        onBack={() => setView('profile')}
       />
     )
   }

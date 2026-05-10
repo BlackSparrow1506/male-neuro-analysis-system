@@ -219,6 +219,22 @@ export async function fetchAgentRun(runId) {
   return handleResponse(res);
 }
 
+// ─── Admin / Governance ───────────────────────────────────────────────────────
+export async function fetchAdminOverview() {
+  const res = await fetch(`${BASE}${API_PATHS.ADMIN.OVERVIEW}`, { headers: authHeaders() });
+  return handleResponse(res);
+}
+
+export async function fetchAdminAudit(limit = 100) {
+  const res = await fetch(`${BASE}${API_PATHS.ADMIN.AUDIT}?limit=${limit}`, { headers: authHeaders() });
+  return handleResponse(res);
+}
+
+export async function fetchAdminAgentRuns(limit = 100) {
+  const res = await fetch(`${BASE}${API_PATHS.ADMIN.AGENT_RUNS}?limit=${limit}`, { headers: authHeaders() });
+  return handleResponse(res);
+}
+
 // ─── TTS ──────────────────────────────────────────────────────────────────────
 export async function synthesizeSpeech(text) {
   const res = await fetch(`${BASE}${API_PATHS.TTS}`, {

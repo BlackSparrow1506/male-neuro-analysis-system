@@ -10,5 +10,6 @@ import java.util.List;
 public interface AuditLogRepository extends MongoRepository<AuditLog, String> {
     List<AuditLog> findByUserIdOrderByTimestampDesc(String userId, Pageable pageable);
     List<AuditLog> findByTimestampGreaterThanEqual(Instant since);
+    List<AuditLog> findAllByOrderByTimestampDesc(Pageable pageable);
     void deleteByUserId(String userId);
 }
