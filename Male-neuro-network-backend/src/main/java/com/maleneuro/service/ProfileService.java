@@ -3,7 +3,9 @@ package com.maleneuro.service;
 import com.maleneuro.model.NeuralProfile;
 import com.maleneuro.repository.ChatMessageRepository;
 import com.maleneuro.repository.NeuralProfileRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
@@ -50,7 +52,7 @@ public class ProfileService {
 
     public NeuralProfile update(String id, NeuralProfile updates) {
         NeuralProfile existing = profileRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Profile not found: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found: " + id));
         applyEditableFields(existing, updates);
         metrics.recomputeAll(existing);
         existing.setUpdatedAt(Instant.now());

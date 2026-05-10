@@ -8,7 +8,9 @@ import com.maleneuro.model.NeuralProfile;
 import com.maleneuro.repository.AgentRunRepository;
 import com.maleneuro.repository.ChatMessageRepository;
 import com.maleneuro.repository.NeuralProfileRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.Comparator;
@@ -58,7 +60,7 @@ public class ChatAnalysisService {
 
     public ChatMessage analyzeMessage(String profileId, String userMessage) {
         NeuralProfile profile = profileRepo.findById(profileId)
-                .orElseThrow(() -> new RuntimeException("Profile not found: " + profileId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found: " + profileId));
 
         // Snapshot prior history before persisting the new message so we don't
         // double-count the latest user turn in the LLM context window.

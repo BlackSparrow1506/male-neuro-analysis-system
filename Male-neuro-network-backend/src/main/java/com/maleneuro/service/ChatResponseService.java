@@ -1,9 +1,9 @@
 package com.maleneuro.service;
 
 import com.maleneuro.model.ChatMessage;
-import com.maleneuro.model.ChatRole;
 import com.maleneuro.model.NeuralProfile;
 import com.maleneuro.service.llm.LlmClient;
+import com.maleneuro.service.llm.SystemPromptBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +12,6 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Domain layer for the chat assistant. Owns the system-prompt construction,
@@ -32,6 +31,16 @@ public class ChatResponseService {
 
     private static final double DEFAULT_TEMPERATURE = 0.7;
     private static final int    DEFAULT_MAX_TOKENS  = 800;
+
+    private static final String COACH_PERSONA = """
+            You are a neural health coach and neuroscience advisor integrated into the Male Neuro Network app.
+            You are speaking with %s, a %d-year-old %s.""";
+
+    private static final String COACH_RESPONSE_STYLE = """
+            Respond conversationally. Reference their specific metrics and lifestyle when relevant.
+            Explain the neuroscience behind what they experience. Give concrete, actionable advice.
+            Keep responses to 3–5 paragraphs. Be warm, direct, and science-grounded.
+            Do not start with generic greetings. Do not use bullet lists unless listing specific action steps.""";
 
     private final LlmClient llmClient;
     private final int historyLimit;
@@ -62,7 +71,12 @@ public class ChatResponseService {
                                                       List<ChatMessage> priorHistory,
                                                       String currentMessage) {
         List<LlmClient.LlmMessage> messages = new ArrayList<>();
-        messages.add(LlmClient.LlmMessage.system(buildSystemPrompt(profile)));
+        messages.add(LlmClient.LlmMessage.system(SystemPromptBuilder.forProfile(profile)
+                .withPersona(COACH_PERSONA)
+                .includeMetricsTable()
+                .includeLifestyleContext()
+                .withResponseStyle(COACH_RESPONSE_STYLE)
+                .build()));
 
         int start = Math.max(0, priorHistory.size() - historyLimit);
         for (int i = start; i < priorHistory.size(); i++) {
@@ -72,62 +86,6 @@ public class ChatResponseService {
 
         messages.add(LlmClient.LlmMessage.user(currentMessage));
         return messages;
-    }
-
-    private String buildSystemPrompt(NeuralProfile p) {
-        Map<String, String> sc = p.getScorecard() != null ? p.getScorecard() : Map.of();
-
-        return String.format("""
-            You are a neural health coach and neuroscience advisor integrated into the Male Neuro Network app.
-            You are speaking with %s, a %d-year-old %s.
-
-            Current neural metrics (0.0–1.0 scale; for stressLevel lower is better, for all others higher is better):
-            - Stress Level:        %.2f  [%s]
-            - Focus Index:         %.2f  [%s]
-            - Cognitive Load:      %.2f  [%s]
-            - Emotional Balance:   %.2f  [%s]
-            - Sleep Quality:       %.2f  [%s]
-            - Physical Activity:   %.2f  [%s]
-            - Mindfulness:         %.2f  [%s]
-            - Social Engagement:   %.2f  [%s]
-            - Analytical Thinking: %.2f  [%s]
-            - Creativity:          %.2f  [%s]
-            - Coherence Score:     %.2f
-
-            Lifestyle context:
-            - Sleep: %d hours/night
-            - Stress source: %s | Primary goal: %s
-            - Meditates: %s | Reads regularly: %s | Mood baseline: %s
-            - Caffeine: %d cups/day | Social life: %s | Exercise: %d days/week (%s)
-            - Diet: %s | Screen time: %d hours/day
-            - Hobbies: %s (%s) | Relationship status: %s
-
-            Respond conversationally. Reference their specific metrics and lifestyle when relevant.
-            Explain the neuroscience behind what they experience. Give concrete, actionable advice.
-            Keep responses to 3–5 paragraphs. Be warm, direct, and science-grounded.
-            Do not start with generic greetings. Do not use bullet lists unless listing specific action steps.
-            """,
-            nvl(p.getName(), "there"), p.getAge(), nvl(p.getOccupation(), "professional"),
-            p.getStressLevel(),        sc.getOrDefault("stressLevel", ""),
-            p.getFocusIndex(),         sc.getOrDefault("focusIndex", ""),
-            p.getCognitiveLoad(),      sc.getOrDefault("cognitiveLoad", ""),
-            p.getEmotionalBalance(),   sc.getOrDefault("emotionalBalance", ""),
-            p.getSleepQuality(),       sc.getOrDefault("sleepQuality", ""),
-            p.getPhysicalActivity(),   sc.getOrDefault("physicalActivity", ""),
-            p.getMindfulness(),        sc.getOrDefault("mindfulness", ""),
-            p.getSocialEngagement(),   sc.getOrDefault("socialEngagement", ""),
-            p.getAnalyticalThinking(), sc.getOrDefault("analyticalThinking", ""),
-            p.getCreativity(),         sc.getOrDefault("creativity", ""),
-            p.getCoherenceScore(),
-            p.getSleepHours(),
-            nvl(p.getStressSource(), "unspecified"), nvl(p.getPrimaryGoal(), "general wellness"),
-            p.isMeditates(), p.isReadsRegularly(), nvl(p.getMoodBaseline(), "neutral"),
-            p.getCaffeineIntake(), nvl(p.getSocialLife(), "moderate"),
-            p.getExerciseFrequency(), nvl(p.getExerciseType(), "general"),
-            nvl(p.getDietQuality(), "average"), p.getScreenTimeHours(),
-            p.isHasHobbies() ? "yes" : "no", nvl(p.getHobbyType(), "none"),
-            nvl(p.getRelationshipStatus(), "unspecified")
-        );
     }
 
     private String buildFallbackResponse(NeuralProfile p, boolean quotaExceeded) {
