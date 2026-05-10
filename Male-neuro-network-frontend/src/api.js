@@ -215,7 +215,7 @@ export async function fetchMetrics(windowSeconds = 3600) {
 
 // ─── Agent orchestration trace ────────────────────────────────────────────────
 export async function fetchAgentRun(runId) {
-  const res = await fetch(`${BASE}${API_PATHS.CHAT.AGENT_RUN(runId)}`, { headers: authHeaders() });
+  const res = await fetch(`${BASE}${API_PATHS.CHAT_AGENT_RUN(runId)}`, { headers: authHeaders() });
   return handleResponse(res);
 }
 
