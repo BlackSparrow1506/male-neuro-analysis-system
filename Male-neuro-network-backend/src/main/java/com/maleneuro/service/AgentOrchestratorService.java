@@ -44,14 +44,14 @@ public class AgentOrchestratorService {
 
     private static final Logger log = LoggerFactory.getLogger(AgentOrchestratorService.class);
 
-    private final GeminiService geminiService;
+    private final ChatResponseService chatResponseService;
     private final GuardrailService guardrailService;
     private final EvalService evalService;
 
-    public AgentOrchestratorService(GeminiService geminiService,
+    public AgentOrchestratorService(ChatResponseService chatResponseService,
                                     GuardrailService guardrailService,
                                     EvalService evalService) {
-        this.geminiService = geminiService;
+        this.chatResponseService = chatResponseService;
         this.guardrailService = guardrailService;
         this.evalService = evalService;
     }
@@ -82,7 +82,7 @@ public class AgentOrchestratorService {
         AgentRun.Step responderStep = openStep(run, "responder", userMessage);
         String draft;
         try {
-            draft = geminiService.generateResponse(profile, priorHistory, userMessage);
+            draft = chatResponseService.generateResponse(profile, priorHistory, userMessage);
         } catch (RuntimeException ex) {
             closeStep(responderStep, "failed", null, "Groq call failed: " + ex.getClass().getSimpleName());
             run.setTotalLatencyMs(System.currentTimeMillis() - started);
@@ -109,7 +109,7 @@ public class AgentOrchestratorService {
                     + "\n\n[Coach guidance: Be direct and actionable. "
                     + "Reference my specific metrics. Avoid disclaimers. 3 paragraphs max.]";
             try {
-                String retryDraft = geminiService.generateResponse(profile, priorHistory, stricter);
+                String retryDraft = chatResponseService.generateResponse(profile, priorHistory, stricter);
                 GuardrailService.OutputFilter retryFilter = guardrailService.filterOutput(retryDraft);
                 String retryResponse = retryFilter.text();
                 EvalService.Result retryEval = evalService.evaluate(userMessage, retryResponse);

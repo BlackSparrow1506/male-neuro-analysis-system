@@ -1,17 +1,11 @@
 package com.maleneuro.service;
 
-import com.maleneuro.config.ExternalApis;
-import com.maleneuro.model.ChatRole;
 import com.maleneuro.model.NeuralProfile;
 import com.maleneuro.model.ScorecardLevel;
+import com.maleneuro.service.llm.LlmClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -31,16 +25,10 @@ public class GitaService {
         Pattern.DOTALL
     );
 
-    private final RestTemplate restTemplate;
+    private final LlmClient llmClient;
 
-    @Value("${groq.api.key}")
-    private String apiKey;
-
-    @Value("${groq.model:" + ExternalApis.Groq.DEFAULT_MODEL + "}")
-    private String model;
-
-    public GitaService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public GitaService(LlmClient llmClient) {
+        this.llmClient = llmClient;
     }
 
     /**
@@ -53,7 +41,7 @@ public class GitaService {
             String prompt = buildGuidancePrompt(profile);
             // Each card carries Sanskrit + IAST + 3 prose blocks; with multiple weaknesses
             // and an overall reading we need plenty of room or the response gets truncated mid-card.
-            String content = callGroq(prompt, 0.6, 4000);
+            String content = llmClient.chatComplete(LlmClient.LlmRequest.singleUser(prompt, 0.6, 4000));
 
             // The model occasionally puts IAST in the SHLOKA_SANSKRIT field.
             // Detect that and retry once with a stricter, lower-temperature instruction.
@@ -67,7 +55,7 @@ public class GitaService {
                     SHLOKA_SANSKRIT: कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।
                     मा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि॥
                     """;
-                content = callGroq(stricter, 0.3, 4000);
+                content = llmClient.chatComplete(LlmClient.LlmRequest.singleUser(stricter, 0.3, 4000));
             }
 
             return Map.of(
@@ -103,7 +91,7 @@ public class GitaService {
                 Text:
                 %s
                 """, targetLanguage, text);
-            return callGroq(prompt, 0.3, 1200);
+            return llmClient.chatComplete(LlmClient.LlmRequest.singleUser(prompt, 0.3, 1200));
         } catch (Exception e) {
             log.error("Gita translation failed: {}", e.getMessage(), e);
             return text;
@@ -238,41 +226,6 @@ public class GitaService {
             p.getCognitiveLoad(),
             weaknessLines.toString().trim()
         );
-    }
-
-    // ---- Groq call ----
-
-    @SuppressWarnings("unchecked")
-    private String callGroq(String prompt, double temperature, int maxTokens) {
-        Map<String, Object> requestBody = Map.of(
-            "model", model,
-            "messages", List.of(Map.of("role", ChatRole.USER.wire(), "content", prompt)),
-            "temperature", temperature,
-            "max_tokens", maxTokens
-        );
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
-
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-
-        try {
-            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                ExternalApis.Groq.CHAT_COMPLETIONS_URL,
-                HttpMethod.POST,
-                request,
-                new ParameterizedTypeReference<Map<String, Object>>() {}
-            );
-            Map<String, Object> body = response.getBody();
-            if (body == null) throw new IllegalStateException("Empty Groq response");
-            List<Map<String, Object>> choices = (List<Map<String, Object>>) body.get("choices");
-            Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-            return (String) message.get("content");
-        } catch (HttpClientErrorException e) {
-            log.error("Groq HTTP error: {} {}", e.getStatusCode(), e.getMessage());
-            throw e;
-        }
     }
 
     // ---- Fallback ----

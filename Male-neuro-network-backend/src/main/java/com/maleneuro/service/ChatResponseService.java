@@ -1,104 +1,76 @@
 package com.maleneuro.service;
 
-import com.maleneuro.config.ExternalApis;
 import com.maleneuro.model.ChatMessage;
 import com.maleneuro.model.ChatRole;
 import com.maleneuro.model.NeuralProfile;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
+import com.maleneuro.service.llm.LlmClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Domain layer for the chat assistant. Owns the system-prompt construction,
+ * the message-list assembly, and the profile-aware fallback that runs when
+ * the underlying {@link LlmClient} call fails.
+ *
+ * The HTTP plumbing, retry policy, and circuit breaker live on the
+ * {@link com.maleneuro.service.llm.GroqLlmClient} bean (DIP — this class
+ * depends only on the {@link LlmClient} port).
+ *
+ * Replaces the old GeminiService, whose name predated the Groq migration.
+ */
 @Service
-public class GeminiService {
+public class ChatResponseService {
 
-    public static final String CB_NAME = "groq";
-    private static final Logger log = LoggerFactory.getLogger(GeminiService.class);
+    private static final Logger log = LoggerFactory.getLogger(ChatResponseService.class);
 
-    private final RestTemplate restTemplate;
+    private static final double DEFAULT_TEMPERATURE = 0.7;
+    private static final int    DEFAULT_MAX_TOKENS  = 800;
 
-    @Value("${groq.api.key}")
-    private String apiKey;
+    private final LlmClient llmClient;
+    private final int historyLimit;
 
-    @Value("${groq.model:" + ExternalApis.Groq.DEFAULT_MODEL + "}")
-    private String model;
-
-    @Value("${groq.history.limit:10}")
-    private int historyLimit;
-
-    public GeminiService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public ChatResponseService(LlmClient llmClient,
+                                @Value("${groq.history.limit:10}") int historyLimit) {
+        this.llmClient = llmClient;
+        this.historyLimit = historyLimit;
     }
 
-    @Retry(name = CB_NAME)
-    @CircuitBreaker(name = CB_NAME, fallbackMethod = "fallbackResponse")
     public String generateResponse(NeuralProfile profile, List<ChatMessage> priorHistory, String currentMessage) {
-        List<Map<String, Object>> messages = buildMessages(profile, priorHistory, currentMessage);
-
-        Map<String, Object> requestBody = Map.of(
-                "model", model,
-                "messages", messages,
-                "temperature", 0.7,
-                "max_tokens", 800
-        );
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
-
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-
-        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                ExternalApis.Groq.CHAT_COMPLETIONS_URL,
-                HttpMethod.POST,
-                request,
-                new ParameterizedTypeReference<Map<String, Object>>() {}
-        );
-
-        return extractText(response.getBody());
-    }
-
-    @SuppressWarnings("unused")
-    private String fallbackResponse(NeuralProfile profile, List<ChatMessage> priorHistory, String currentMessage, Throwable t) {
-        boolean quotaExceeded = (t instanceof HttpClientErrorException hce
-                && hce.getStatusCode().value() == 429);
-        if (quotaExceeded) {
-            log.error("Groq quota exceeded for profile {}; serving degraded fallback", profile.getId());
-        } else {
-            log.error("Groq call failed for profile {} ({}); serving degraded fallback",
-                    profile.getId(), t.getClass().getSimpleName());
+        List<LlmClient.LlmMessage> messages = buildMessages(profile, priorHistory, currentMessage);
+        try {
+            return llmClient.chatComplete(new LlmClient.LlmRequest(messages, DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS));
+        } catch (RuntimeException ex) {
+            boolean quotaExceeded = ex instanceof HttpClientErrorException hce && hce.getStatusCode().value() == 429;
+            if (quotaExceeded) {
+                log.error("LLM quota exceeded for profile {}; serving degraded fallback", profile.getId());
+            } else {
+                log.error("LLM call failed for profile {} ({}); serving degraded fallback",
+                        profile.getId(), ex.getClass().getSimpleName());
+            }
+            return buildFallbackResponse(profile, quotaExceeded);
         }
-        return buildFallbackResponse(profile, quotaExceeded);
     }
 
-    // ---- Request construction ----
+    private List<LlmClient.LlmMessage> buildMessages(NeuralProfile profile,
+                                                      List<ChatMessage> priorHistory,
+                                                      String currentMessage) {
+        List<LlmClient.LlmMessage> messages = new ArrayList<>();
+        messages.add(LlmClient.LlmMessage.system(buildSystemPrompt(profile)));
 
-    private List<Map<String, Object>> buildMessages(NeuralProfile profile, List<ChatMessage> priorHistory, String currentMessage) {
-        List<Map<String, Object>> messages = new ArrayList<>();
-
-        // System prompt as first message
-        messages.add(Map.of("role", ChatRole.SYSTEM.wire(), "content", buildSystemPrompt(profile)));
-
-        // Prior conversation history
         int start = Math.max(0, priorHistory.size() - historyLimit);
         for (int i = start; i < priorHistory.size(); i++) {
             ChatMessage msg = priorHistory.get(i);
-            messages.add(Map.of("role", msg.getRole(), "content", msg.getContent()));
+            messages.add(new LlmClient.LlmMessage(msg.getRole(), msg.getContent()));
         }
 
-        // Current user message
-        messages.add(Map.of("role", ChatRole.USER.wire(), "content", currentMessage));
-
+        messages.add(LlmClient.LlmMessage.user(currentMessage));
         return messages;
     }
 
@@ -157,24 +129,6 @@ public class GeminiService {
             nvl(p.getRelationshipStatus(), "unspecified")
         );
     }
-
-    // ---- Response parsing ----
-
-    @SuppressWarnings("unchecked")
-    private String extractText(Map<String, Object> responseBody) {
-        if (responseBody == null) {
-            throw new IllegalStateException("Empty response body from Groq API");
-        }
-        try {
-            List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
-            Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-            return (String) message.get("content");
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to parse Groq response: " + responseBody, e);
-        }
-    }
-
-    // ---- Fallback ----
 
     private String buildFallbackResponse(NeuralProfile p, boolean quotaExceeded) {
         String reason = quotaExceeded
