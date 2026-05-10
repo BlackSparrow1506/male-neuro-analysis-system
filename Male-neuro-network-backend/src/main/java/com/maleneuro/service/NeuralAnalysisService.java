@@ -1,11 +1,13 @@
 package com.maleneuro.service;
 
+import com.maleneuro.model.AgentRun;
 import com.maleneuro.model.AuditLog;
 import com.maleneuro.model.ChatMessage;
 import com.maleneuro.model.ChatRole;
 import com.maleneuro.model.NeuralConnection;
 import com.maleneuro.model.NeuralProfile;
 import com.maleneuro.model.ScorecardLevel;
+import com.maleneuro.repository.AgentRunRepository;
 import com.maleneuro.repository.ChatMessageRepository;
 import com.maleneuro.repository.NeuralProfileRepository;
 import org.springframework.stereotype.Service;
@@ -19,23 +21,20 @@ public class NeuralAnalysisService {
 
     private final NeuralProfileRepository profileRepo;
     private final ChatMessageRepository chatRepo;
-    private final GeminiService geminiService;
+    private final AgentRunRepository agentRunRepo;
+    private final AgentOrchestratorService orchestrator;
     private final AuditLogService auditLogService;
-    private final GuardrailService guardrailService;
-    private final EvalService evalService;
 
     public NeuralAnalysisService(NeuralProfileRepository profileRepo,
                                   ChatMessageRepository chatRepo,
-                                  GeminiService geminiService,
-                                  AuditLogService auditLogService,
-                                  GuardrailService guardrailService,
-                                  EvalService evalService) {
+                                  AgentRunRepository agentRunRepo,
+                                  AgentOrchestratorService orchestrator,
+                                  AuditLogService auditLogService) {
         this.profileRepo = profileRepo;
         this.chatRepo = chatRepo;
-        this.geminiService = geminiService;
+        this.agentRunRepo = agentRunRepo;
+        this.orchestrator = orchestrator;
         this.auditLogService = auditLogService;
-        this.guardrailService = guardrailService;
-        this.evalService = evalService;
     }
 
     // --- Profile CRUD ---
@@ -126,18 +125,17 @@ public class NeuralAnalysisService {
         profile.setUpdatedAt(Instant.now());
         profileRepo.save(profile);
 
-        long started = System.currentTimeMillis();
-        String response = null;
+        AgentRun run = null;
         boolean success = false;
         String errorMessage = null;
-        List<String> redactedKinds = List.of();
+        long started = System.currentTimeMillis();
         try {
-            String raw = geminiService.generateResponse(profile, priorHistory, userMessage);
-            GuardrailService.OutputFilter filter = guardrailService.filterOutput(raw);
-            response = filter.text();
-            redactedKinds = filter.redactedKinds();
+            run = orchestrator.run(profile, priorHistory, userMessage);
+            run = agentRunRepo.save(run);
             success = true;
-            ChatMessage aiMessage = new ChatMessage(profileId, ChatRole.ASSISTANT.wire(), response);
+
+            ChatMessage aiMessage = new ChatMessage(profileId, ChatRole.ASSISTANT.wire(), run.getResponse());
+            aiMessage.setAgentRunId(run.getId());
             return chatRepo.save(aiMessage);
         } catch (RuntimeException ex) {
             errorMessage = ex.getMessage();
@@ -146,24 +144,24 @@ public class NeuralAnalysisService {
             AuditLog entry = new AuditLog();
             entry.setUserId(profile.getUserId());
             entry.setProfileId(profileId);
-            entry.setAction(redactedKinds.isEmpty() ? "chat.message" : "chat.flagged");
+            entry.setAction(success ? "chat.message" : "chat.message");
             entry.setRequestPreview(userMessage);
-            entry.setResponsePreview(response);
             entry.setLatencyMs(System.currentTimeMillis() - started);
             entry.setSuccess(success);
+            entry.setModel("groq");
+            if (run != null) {
+                entry.setResponsePreview(run.getResponse());
+                entry.setEvalScore(run.getFinalScore());
+            }
             if (errorMessage != null) {
                 entry.setErrorMessage(errorMessage);
-            } else if (!redactedKinds.isEmpty()) {
-                entry.setErrorMessage("PII redacted from response: " + String.join(", ", redactedKinds));
-            }
-            entry.setModel("groq");
-            if (success && response != null) {
-                EvalService.Result eval = evalService.evaluate(userMessage, response);
-                entry.setEvalScore(eval.score());
-                entry.setEvalNotes(eval.notes());
             }
             auditLogService.record(entry);
         }
+    }
+
+    public Optional<AgentRun> getAgentRun(String id) {
+        return agentRunRepo.findById(id);
     }
 
     public List<ChatMessage> getChatHistory(String profileId) {

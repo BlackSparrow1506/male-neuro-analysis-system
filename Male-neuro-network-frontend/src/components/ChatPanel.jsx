@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { sendChatMessage, fetchChatHistory, synthesizeSpeech } from '../api'
+import AgentTrace from './AgentTrace'
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
 
@@ -32,6 +33,7 @@ export default function ChatPanel({ profileId, onClearChat }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [traceRunId, setTraceRunId] = useState(null)
   const [isListening, setIsListening] = useState(false)
   const [ttsEnabled, setTtsEnabled] = useState(true)
   const [micSupported] = useState(() => !!SpeechRecognition)
@@ -217,6 +219,15 @@ export default function ChatPanel({ profileId, onClearChat }) {
           }}>
             <div style={styles.msgRole}>{msg.role === 'user' ? 'You' : 'Neural AI'}</div>
             <div style={styles.msgContent}>{msg.content}</div>
+            {msg.role === 'assistant' && msg.agentRunId && (
+              <button
+                type="button"
+                onClick={() => setTraceRunId(msg.agentRunId)}
+                style={styles.traceBtn}
+              >
+                view agent trace ▸
+              </button>
+            )}
           </div>
         ))}
         {loading && (
@@ -283,6 +294,10 @@ export default function ChatPanel({ profileId, onClearChat }) {
           50% { transform: scale(1.1); }
         }
       `}</style>
+
+      {traceRunId && (
+        <AgentTrace runId={traceRunId} onClose={() => setTraceRunId(null)} />
+      )}
     </div>
   )
 }
@@ -350,6 +365,18 @@ const styles = {
     color: '#ccd6f6',
     lineHeight: '1.5',
     whiteSpace: 'pre-wrap',
+  },
+  traceBtn: {
+    marginTop: 8,
+    padding: '3px 0',
+    background: 'transparent',
+    border: 'none',
+    color: '#7c4dff',
+    fontSize: 10,
+    letterSpacing: '1px',
+    textTransform: 'uppercase',
+    cursor: 'pointer',
+    fontWeight: 'bold',
   },
   inputArea: {
     borderTop: '1px solid #1a3a5c',
