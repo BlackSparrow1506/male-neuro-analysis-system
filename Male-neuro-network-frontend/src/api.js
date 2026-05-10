@@ -131,7 +131,7 @@ export const fetchMyAuditLog = (limit = 50)          => apiGet(`${API_PATHS.AUDI
 export const fetchMetrics = (windowSeconds = 3600)   => apiGet(`${API_PATHS.METRICS}?windowSeconds=${windowSeconds}`);
 
 // ─── Agent orchestration trace ────────────────────────────────────────────────
-export const fetchAgentRun = (runId)                 => apiGet(API_PATHS.CHAT.AGENT_RUN(runId));
+export const fetchAgentRun = (runId)                 => apiGet(API_PATHS.CHAT_AGENT_RUN(runId));
 
 // ─── Admin / Governance ───────────────────────────────────────────────────────
 export const fetchAdminOverview  = ()                => apiGet(API_PATHS.ADMIN.OVERVIEW);

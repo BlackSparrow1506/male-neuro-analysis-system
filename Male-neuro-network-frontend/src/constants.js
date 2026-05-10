@@ -26,8 +26,9 @@ export const API_PATHS = Object.freeze({
     PASSWORD:            '/auth/password',
     ACCOUNT:             '/auth/account',
   },
-  PROFILES: '/profiles',
-  CHAT:     '/chat',
+  PROFILES:       '/profiles',
+  CHAT:           '/chat',
+  CHAT_AGENT_RUN: (id) => `/chat/agent-run/${id}`,
   GITA: {
     GUIDANCE:  '/gita',          // /gita/{profileId}/guidance
     TRANSLATE: '/gita/translate',
@@ -38,9 +39,6 @@ export const API_PATHS = Object.freeze({
     ME: '/audit/me',
   },
   METRICS: '/metrics',
-  CHAT: {
-    AGENT_RUN: (id) => `/chat/agent-run/${id}`,
-  },
   ADMIN: {
     OVERVIEW:   '/admin/overview',
     AUDIT:      '/admin/audit',
