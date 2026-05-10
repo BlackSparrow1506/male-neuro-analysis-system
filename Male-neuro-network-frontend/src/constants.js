@@ -5,6 +5,7 @@ export const STORAGE_KEYS = Object.freeze({
   EMAIL:           'nn_email',
   USERNAME:        'nn_username',
   EMAIL_VERIFIED:  'nn_emailVerified',
+  ADMIN:           'nn_admin',
 });
 
 export const EVENTS = Object.freeze({
@@ -39,6 +40,11 @@ export const API_PATHS = Object.freeze({
   METRICS: '/metrics',
   CHAT: {
     AGENT_RUN: (id) => `/chat/agent-run/${id}`,
+  },
+  ADMIN: {
+    OVERVIEW:   '/admin/overview',
+    AUDIT:      '/admin/audit',
+    AGENT_RUNS: '/admin/agent-runs',
   },
 });
 

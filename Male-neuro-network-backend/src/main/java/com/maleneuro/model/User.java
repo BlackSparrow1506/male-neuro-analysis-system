@@ -27,6 +27,8 @@ public class User {
 
     private String authProvider = AuthProvider.LOCAL.name();
 
+    private boolean admin = false;
+
     private Instant createdAt = Instant.now();
 
     public User() {}
@@ -54,6 +56,9 @@ public class User {
 
     public String getAuthProvider() { return authProvider; }
     public void setAuthProvider(String authProvider) { this.authProvider = authProvider; }
+
+    public boolean isAdmin() { return admin; }
+    public void setAdmin(boolean admin) { this.admin = admin; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

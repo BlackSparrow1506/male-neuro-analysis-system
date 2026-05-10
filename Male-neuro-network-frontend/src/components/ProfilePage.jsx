@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { changePassword, deleteAccount, logout, resendVerification } from '../api'
 import ActivityLog from './ActivityLog'
 
-export default function ProfilePage({ username, email, emailVerified = true, onEmailVerifiedChange, onBack, onLogout }) {
+export default function ProfilePage({ username, email, emailVerified = true, isAdmin = false, onOpenGovernance, onEmailVerifiedChange, onBack, onLogout }) {
   const [activeTab, setActiveTab] = useState('account')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword]         = useState('')
@@ -93,6 +93,14 @@ export default function ProfilePage({ username, email, emailVerified = true, onE
           >
             <span style={styles.navIcon}>◇</span> Activity Log
           </div>
+          {isAdmin && (
+            <div
+              style={{...styles.navItem, color: '#7c4dff'}}
+              onClick={onOpenGovernance}
+            >
+              <span style={styles.navIcon}>◆</span> Governance Panel
+            </div>
+          )}
         </nav>
         <button onClick={onBack} style={styles.backBtn}>
           ← Back to Dashboard
