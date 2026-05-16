@@ -305,6 +305,36 @@ Special-case error codes returned by specific endpoints:
 
 ---
 
+## Claude Code Tooling
+
+The repo ships a `.claude/` workspace so contributors using [Claude Code](https://claude.com/claude-code) get project-aware assistance out of the box. `CLAUDE.md` is loaded at session start; the rest is loaded on demand.
+
+### Subagents
+
+Specialised agents under `.claude/agents/`, each scoped to this codebase. Claude picks the right one automatically, or you can invoke one explicitly.
+
+| Agent | Use it for |
+|-------|------------|
+| `code-reviewer` | Independent review of pending changes against the project rules — safe-to-merge verdict |
+| `security-auditor` | Security review of auth, JWT, CORS, Mongo queries, and external-API integrations |
+| `testing-agent` | Writing, running, and fixing JUnit/Mockito (backend) and Vitest/RTL (frontend) tests |
+| `db-agent` | MongoDB index coverage, schema drift, NoSQL-injection and N+1 detection |
+| `perf-agent` | Slow API paths, blocking external calls, Three.js render loops, bundle bloat |
+| `api-doc-agent` | Keeping controllers, `src/api.js`, and the docs in sync; OpenAPI generation |
+| `env-audit-agent` | Cross-checking env vars across code, `.env.example`, Docker, and Render/Vercel |
+| `migration-agent` | Detecting `model/` changes that need a MongoDB data migration |
+| `dependency-agent` | CVE / outdated / version-drift audit of `pom.xml` and `package.json` |
+| `onboarding-agent` | Regenerating this README from the actual state of the code |
+| `i18n-agent` | Extracting hardcoded strings and managing translation-key coverage |
+
+### Rules, commands & skills
+
+- **Rules** (`.claude/rules/`) — `code-style.md`, `testing.md`, `api-conventions.md` are loaded on demand to keep generated code in house style.
+- **Commands** (`.claude/commands/`) — `/fix-issue` (root-cause bug fix) and `/review` (review pending changes).
+- **Skills** (`.claude/skills/`) — `deploy` builds and ships the stack (frontend → Vercel, backend → Render via Docker).
+
+---
+
 ## Local Development
 
 ### Backend
